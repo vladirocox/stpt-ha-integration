@@ -5,5 +5,6 @@ CONF_NAME = "name"
 DEFAULT_NAME = "STPT Station"
 ATTRIBUTION = "Data from STPT (Societatea de Transport Public Timi\u0219oara)"
 LIVE_API_URL = "https://live.stpt.ro/proxy-smtt-cache.php"
+ALERTS_API_URL = "https://live.stpt.ro/proxy-alerts.php"
 STATIONS_MAP_FILE = "stations_map.json"
 UPDATE_INTERVAL = 15
