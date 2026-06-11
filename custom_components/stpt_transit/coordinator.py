@@ -186,7 +186,7 @@ def _parse_alerts(raw: Any) -> list[dict]:
 
 
 class StptTransitCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, stations_map: dict | None = None, line_config: dict | None = None) -> None:
         super().__init__(
             hass,
             _LOGGER,
@@ -195,8 +195,8 @@ class StptTransitCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=UPDATE_INTERVAL),
             always_update=True,
         )
-        self._stations_map = _load_stations_map()
-        self._line_config = _load_line_config()
+        self._stations_map = stations_map if stations_map is not None else {}
+        self._line_config = line_config if line_config is not None else {}
         self._session = async_get_clientsession(hass)
         self._schedule_cache: dict[str, Any] = {}
         self._alerts_cache: list[dict] | None = None

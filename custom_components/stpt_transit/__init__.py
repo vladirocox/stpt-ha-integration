@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN
-from .coordinator import StptTransitCoordinator, StptTransitConfigEntry
+from .coordinator import StptTransitCoordinator, StptTransitConfigEntry, _load_stations_map, _load_line_config
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
 _LOGGER = logging.getLogger(__name__)
@@ -16,7 +16,9 @@ CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: StptTransitConfigEntry) -> bool:
-    coordinator = StptTransitCoordinator(hass, entry)
+    stations_map = await hass.async_add_executor_job(_load_stations_map)
+    line_config = await hass.async_add_executor_job(_load_line_config)
+    coordinator = StptTransitCoordinator(hass, entry, stations_map, line_config)
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {"coordinator": coordinator}

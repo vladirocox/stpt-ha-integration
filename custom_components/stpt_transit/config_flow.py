@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import logging
+import os
 from typing import Any
 
 import voluptuous as vol
@@ -18,15 +20,21 @@ ADD_METHODS = {
     "manual": "Enter stop ID directly",
 }
 
+_SEARCH_INDEX: dict | None = None
+
 
 def _load_search_index():
-    import json, os
+    global _SEARCH_INDEX
+    if _SEARCH_INDEX is not None:
+        return _SEARCH_INDEX
     path = os.path.join(os.path.dirname(__file__), "stations_map.json")
     try:
         with open(path) as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+            _SEARCH_INDEX = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as err:
+        _LOGGER.warning("Could not load stations_map.json: %s", err)
+        _SEARCH_INDEX = {}
+    return _SEARCH_INDEX
 
 
 def _search_stations(query: str) -> list[dict]:
@@ -76,7 +84,8 @@ class StptTransitConfigFlow(ConfigFlow, domain=DOMAIN):
                 )
             try:
                 results = await self.hass.async_add_executor_job(_search_stations, query)
-            except Exception:
+            except Exception as err:
+                _LOGGER.error("Search failed for '%s': %s", query, err)
                 results = None
             if not results:
                 return self.async_show_form(
@@ -179,7 +188,8 @@ class StptTransitOptionsFlow(OptionsFlow):
                 )
             try:
                 results = await self.hass.async_add_executor_job(_search_stations, query)
-            except Exception:
+            except Exception as err:
+                _LOGGER.error("Options search failed for '%s': %s", query, err)
                 results = None
             if not results:
                 return self.async_show_form(
