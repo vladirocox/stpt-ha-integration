@@ -7,6 +7,7 @@
   "issue_tracker": "https://github.com/vladirocox/stpt-ha-integration/issues",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
+  "dependencies": ["http", "panel_custom"],
   "requirements": [],
-  "version": "1.1.0"
+  "version": "1.2.0"
 }

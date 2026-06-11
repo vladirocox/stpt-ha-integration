@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any
 
 from homeassistant.const import Platform
@@ -26,6 +27,39 @@ def get_stations(entry) -> list[dict]:
     return data
 
 
+async def _async_register_panel(hass: HomeAssistant) -> None:
+    from homeassistant.components import panel_custom
+    from homeassistant.components.frontend import async_panel_exists
+    from homeassistant.components.http import StaticPathConfig
+
+    panel_url_path = f"{DOMAIN}_map"
+    if async_panel_exists(hass, panel_url_path):
+        return
+
+    panel_dir = os.path.join(os.path.dirname(__file__), "frontend")
+    await hass.http.async_register_static_paths([
+        StaticPathConfig(f"/{DOMAIN}/panel", panel_dir, cache_headers=False)
+    ])
+    await panel_custom.async_register_panel(
+        hass=hass,
+        frontend_url_path=panel_url_path,
+        webcomponent_name="stpt-map-panel",
+        sidebar_title="STPT Live",
+        sidebar_icon="mdi:bus",
+        module_url=f"/{DOMAIN}/panel/stpt-map-panel.js",
+        embed_iframe=False,
+        require_admin=False,
+    )
+
+
+def _async_remove_panel(hass: HomeAssistant) -> None:
+    from homeassistant.components.frontend import async_panel_exists, async_remove_panel
+
+    panel_url_path = f"{DOMAIN}_map"
+    if async_panel_exists(hass, panel_url_path):
+        async_remove_panel(hass, panel_url_path)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: StptTransitConfigEntry) -> bool:
     try:
         stations_map = await hass.async_add_executor_job(_load_stations_map)
@@ -47,6 +81,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: StptTransitConfigEntry) 
     except Exception as err:
         _LOGGER.error("Failed to set up platforms: %s", err)
         return False
+    await _async_register_panel(hass)
     entry.async_on_unload(entry.add_update_listener(async_update_entry))
     return True
 
@@ -56,6 +91,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: StptTransitConfigEntry)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id, None)
         if not hass.data[DOMAIN]:
+            _async_remove_panel(hass)
             hass.data.pop(DOMAIN, None)
     return unload_ok
 

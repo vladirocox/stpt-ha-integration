@@ -11,7 +11,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers import entity_registry as er
 
-from .const import DOMAIN, ATTRIBUTION
+from .const import DOMAIN, ATTRIBUTION, CONF_LINES
 from .coordinator import StptTransitConfigEntry, StptTransitCoordinator
 from . import get_stations
 
@@ -37,6 +37,10 @@ async def async_setup_entry(
         name = station.get("name", "") or station_info.get("name", "") or f"Station {stop_id}"
 
         lines = _discover_lines(coordinator, stop_id, data)
+
+        station_lines = station.get(CONF_LINES)
+        if station_lines:
+            lines = {str(l).strip() for l in station_lines} & lines
 
         if lines:
             for line in sorted(lines):
