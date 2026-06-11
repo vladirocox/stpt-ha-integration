@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import unicodedata
 from typing import Any
 
 import voluptuous as vol
@@ -60,15 +61,21 @@ def _load_line_config():
     return _LINE_CONFIG
 
 
+def _normalize(text: str) -> str:
+    nfkd = unicodedata.normalize("NFKD", text)
+    return nfkd.encode("ascii", "ignore").decode("ascii").lower()
+
+
 def _search_stations(query: str) -> list[dict]:
     index = _load_search_index()
     q = query.strip().lower()
     if not q:
         return []
+    q_norm = _normalize(q)
     results = []
     for stop_id, info in index.items():
-        name = info[0].lower()
-        if q in name or q in stop_id:
+        name_lower = info[0].lower()
+        if q in name_lower or q in stop_id or (q_norm and q_norm in _normalize(info[0])):
             results.append({"stop_id": stop_id, "name": info[0]})
     results.sort(key=lambda s: s["name"].lower())
     return results[:30]
