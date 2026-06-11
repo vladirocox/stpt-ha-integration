@@ -22,7 +22,7 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 
 1. Asigură-te că [HACS](https://hacs.xyz) este instalat
 2. Mergi la **HACS → Integrations → meniul cu trei puncte → Custom repositories**
-3. Adaugă: `https://github.com/vladirocox/stpt-transit-ha` cu categoria **Integration**
+3. Adaugă: `https://github.com/vladirocox/stpt-ha-integration` cu categoria **Integration**
 4. Apasă **Install** pe cardul "STPT Transit"
 5. Repornește Home Assistant
 

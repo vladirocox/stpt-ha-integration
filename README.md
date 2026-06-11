@@ -23,7 +23,7 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 
 1. Make sure [HACS](https://hacs.xyz) is installed
 2. Go to **HACS → Integrations → three-dot menu → Custom repositories**
-3. Add: `https://github.com/vladirocox/stpt-transit-ha` with category **Integration**
+3. Add: `https://github.com/vladirocox/stpt-ha-integration` with category **Integration**
 4. Click **Install** on the "STPT Transit" card
 5. Restart Home Assistant
 
