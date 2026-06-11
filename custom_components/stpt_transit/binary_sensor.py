@@ -1,0 +1,59 @@
+from __future__ import annotations
+
+import logging
+from typing import Any
+
+from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import DOMAIN, ATTRIBUTION
+from .coordinator import StptTransitConfigEntry, StptTransitCoordinator
+
+_LOGGER = logging.getLogger(__name__)
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: StptTransitConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    coordinator = entry.runtime_data
+    async_add_entities([StptAlertsBinarySensor(coordinator)], update_before_add=True)
+
+
+class StptAlertsBinarySensor(CoordinatorEntity, BinarySensorEntity):
+    _attr_has_entity_name = True
+    _attr_device_class = "problem"
+
+    def __init__(self, coordinator: StptTransitCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_alerts"
+        self._attr_name = "STPT Disruptions"
+        self._attr_icon = "mdi:alert-circle"
+        self._attr_attribution = ATTRIBUTION
+        self._attr_should_poll = False
+        self._attr_extra_state_attributes = {
+            "alert_count": 0,
+            "alerts": [],
+        }
+
+    @property
+    def is_on(self) -> bool:
+        data = self.coordinator.data or {}
+        alerts = data.get("alerts", [])
+        return isinstance(alerts, list) and len(alerts) > 0
+
+    def _handle_coordinator_update(self) -> None:
+        data = self.coordinator.data or {}
+        alerts = data.get("alerts", [])
+        if not isinstance(alerts, list):
+            alerts = []
+
+        self._attr_extra_state_attributes = {
+            "alert_count": len(alerts),
+            "alerts": alerts,
+        }
+
+        self.async_write_ha_state()

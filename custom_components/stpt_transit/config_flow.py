@@ -1,0 +1,237 @@
+from __future__ import annotations
+
+import logging
+from typing import Any
+
+import voluptuous as vol
+
+from homeassistant.config_entries import ConfigFlow, ConfigEntry, OptionsFlow
+from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, SelectSelector, SelectSelectorConfig
+
+from .const import DOMAIN, CONF_STATIONS, CONF_STOP_ID, CONF_NAME
+
+_LOGGER = logging.getLogger(__name__)
+
+ADD_METHODS = {
+    "search": "Search by station name",
+    "manual": "Enter stop ID directly",
+}
+
+
+def _load_search_index():
+    import json, os
+    path = os.path.join(os.path.dirname(__file__), "stations_map.json")
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def _search_stations(query: str) -> list[dict]:
+    index = _load_search_index()
+    q = query.strip().lower()
+    if not q:
+        return []
+    results = []
+    for stop_id, info in index.items():
+        name = info[0].lower()
+        if q in name or q in stop_id:
+            results.append({"stop_id": stop_id, "name": info[0]})
+    results.sort(key=lambda s: s["name"].lower())
+    return results[:30]
+
+
+class StptTransitConfigFlow(ConfigFlow, domain=DOMAIN):
+    VERSION = 1
+    MINOR_VERSION = 1
+
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        if user_input is not None:
+            method = user_input.get("method", "search")
+            if method == "search":
+                return await self.async_step_search()
+            return await self.async_step_manual()
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema({
+                vol.Required("method", default="search"): vol.In(ADD_METHODS),
+            }),
+        )
+
+    async def async_step_search(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        if user_input is not None:
+            query = user_input.get("query", "").strip()
+            if not query:
+                return self.async_show_form(
+                    step_id="search",
+                    data_schema=vol.Schema({
+                        vol.Required("query"): TextSelector(TextSelectorConfig(type="text")),
+                    }),
+                    errors={"query": "Enter a station name or stop ID"},
+                )
+            results = await self.hass.async_add_executor_job(_search_stations, query)
+            if not results:
+                return self.async_show_form(
+                    step_id="search",
+                    data_schema=vol.Schema({
+                        vol.Required("query", default=query): TextSelector(TextSelectorConfig(type="text")),
+                    }),
+                    errors={"query": "No stations found. Try a different name or use manual entry."},
+                )
+            return await self.async_step_pick_station(results)
+
+        return self.async_show_form(
+            step_id="search",
+            data_schema=vol.Schema({
+                vol.Required("query"): TextSelector(TextSelectorConfig(type="text")),
+            }),
+        )
+
+    async def async_step_pick_station(self, results: list[dict] | None = None, user_input: dict[str, Any] | None = None) -> FlowResult:
+        if user_input is not None:
+            stop_id = user_input.get(CONF_STOP_ID)
+            name = user_input.get(CONF_NAME, "")
+            stations = [{"stop_id": stop_id, "name": name or ""}]
+            return self.async_create_entry(title=f"STPT {stop_id}", data={CONF_STATIONS: stations})
+
+        if not results:
+            return await self.async_step_search()
+
+        options = {r["stop_id"]: f"{r['stop_id']} - {r['name']}" for r in results}
+        return self.async_show_form(
+            step_id="pick_station",
+            data_schema=vol.Schema({
+                vol.Required(CONF_STOP_ID): SelectSelector(SelectSelectorConfig(options=options)),
+                vol.Optional(CONF_NAME, default=""): TextSelector(TextSelectorConfig(type="text")),
+            }),
+        )
+
+    async def async_step_manual(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        if user_input is not None:
+            stations = [{"stop_id": user_input[CONF_STOP_ID], "name": user_input.get(CONF_NAME, "") or ""}]
+            return self.async_create_entry(title=f"STPT {user_input[CONF_STOP_ID]}", data={CONF_STATIONS: stations})
+
+        return self.async_show_form(
+            step_id="manual",
+            data_schema=vol.Schema({
+                vol.Required(CONF_STOP_ID): TextSelector(TextSelectorConfig(type="text")),
+                vol.Optional(CONF_NAME, default=""): TextSelector(TextSelectorConfig(type="text")),
+            }),
+        )
+
+    @staticmethod
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        return StptTransitOptionsFlow(config_entry)
+
+
+class StptTransitOptionsFlow(OptionsFlow):
+    def __init__(self, config_entry: ConfigEntry) -> None:
+        self._config_entry = config_entry
+
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        if user_input is not None:
+            action = user_input.get("action")
+            if action == "add_search":
+                return await self.async_step_add_search()
+            if action == "add_manual":
+                return await self.async_step_add_manual()
+            if action == "remove":
+                return await self.async_step_remove_station()
+            return self.async_create_entry(title="", data={})
+
+        current = self._config_entry.data.get(CONF_STATIONS, [])
+        actions = {
+            "add_search": "Search by name to add",
+            "add_manual": "Enter stop ID to add",
+            "remove": "Remove a station",
+        }
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema({
+                vol.Required("action", default="add_search"): vol.In(actions),
+            }),
+            description_placeholders={"station_count": str(len(current))},
+        )
+
+    async def async_step_add_search(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        if user_input is not None:
+            query = user_input.get("query", "").strip()
+            if not query:
+                return self.async_show_form(
+                    step_id="add_search",
+                    data_schema=vol.Schema({
+                        vol.Required("query"): TextSelector(TextSelectorConfig(type="text")),
+                    }),
+                    errors={"query": "Enter a station name"},
+                )
+            results = await self.hass.async_add_executor_job(_search_stations, query)
+            if not results:
+                return self.async_show_form(
+                    step_id="add_search",
+                    data_schema=vol.Schema({
+                        vol.Required("query", default=query): TextSelector(TextSelectorConfig(type="text")),
+                    }),
+                    errors={"query": "No stations found"},
+                )
+            return await self.async_step_add_pick(results)
+
+        return self.async_show_form(
+            step_id="add_search",
+            data_schema=vol.Schema({
+                vol.Required("query"): TextSelector(TextSelectorConfig(type="text")),
+            }),
+        )
+
+    async def async_step_add_pick(self, results: list[dict] | None = None, user_input: dict[str, Any] | None = None) -> FlowResult:
+        if user_input is not None:
+            stations = list(self._config_entry.data.get(CONF_STATIONS, []))
+            stop_id = user_input.get(CONF_STOP_ID)
+            name = user_input.get(CONF_NAME, "")
+            stations.append({"stop_id": stop_id, "name": name or ""})
+            self.hass.config_entries.async_update_entry(self._config_entry, data={CONF_STATIONS: stations})
+            return self.async_create_entry(title="", data={})
+
+        if not results:
+            return await self.async_step_add_search()
+
+        options = {r["stop_id"]: f"{r['stop_id']} - {r['name']}" for r in results}
+        return self.async_show_form(
+            step_id="add_pick",
+            data_schema=vol.Schema({
+                vol.Required(CONF_STOP_ID): SelectSelector(SelectSelectorConfig(options=options)),
+                vol.Optional(CONF_NAME, default=""): TextSelector(TextSelectorConfig(type="text")),
+            }),
+        )
+
+    async def async_step_add_manual(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        if user_input is not None:
+            stations = list(self._config_entry.data.get(CONF_STATIONS, []))
+            stations.append({"stop_id": user_input[CONF_STOP_ID], "name": user_input.get(CONF_NAME, "") or ""})
+            self.hass.config_entries.async_update_entry(self._config_entry, data={CONF_STATIONS: stations})
+            return self.async_create_entry(title="", data={})
+
+        return self.async_show_form(
+            step_id="add_manual",
+            data_schema=vol.Schema({
+                vol.Required(CONF_STOP_ID): TextSelector(TextSelectorConfig(type="text")),
+                vol.Optional(CONF_NAME, default=""): TextSelector(TextSelectorConfig(type="text")),
+            }),
+        )
+
+    async def async_step_remove_station(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        current = self._config_entry.data.get(CONF_STATIONS, [])
+        if user_input is not None:
+            to_remove = user_input.get("stop_id", "")
+            stations = [s for s in current if s.get(CONF_STOP_ID) != to_remove]
+            self.hass.config_entries.async_update_entry(self._config_entry, data={CONF_STATIONS: stations})
+            return self.async_create_entry(title="", data={})
+
+        options = {s.get(CONF_STOP_ID): f"{s.get(CONF_STOP_ID)} - {s.get(CONF_NAME, '')}" for s in current}
+        return self.async_show_form(
+            step_id="remove_station",
+            data_schema=vol.Schema({
+                vol.Required("stop_id"): vol.In(options),
+            }),
+        )

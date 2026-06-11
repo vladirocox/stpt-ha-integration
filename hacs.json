@@ -1,0 +1,8 @@
+{
+  "name": "STPT Transit (Timi\u0219oara)",
+  "render_readme": true,
+  "domains": ["stpt_transit"],
+  "country": "RO",
+  "homeassistant": "2024.1.0",
+  "iot_class": "Cloud Polling"
+}

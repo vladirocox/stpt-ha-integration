@@ -1,0 +1,9 @@
+DOMAIN = "stpt_transit"
+CONF_STATIONS = "stations"
+CONF_STOP_ID = "stop_id"
+CONF_NAME = "name"
+DEFAULT_NAME = "STPT Station"
+ATTRIBUTION = "Data from STPT (Societatea de Transport Public Timi\u0219oara)"
+LIVE_API_URL = "https://live.stpt.ro/proxy-smtt-cache.php"
+STATIONS_MAP_FILE = "stations_map.json"
+UPDATE_INTERVAL = 15
