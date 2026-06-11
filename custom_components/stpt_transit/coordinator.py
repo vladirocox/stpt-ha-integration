@@ -15,7 +15,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import DOMAIN, LIVE_API_URL, ALERTS_API_URL, UPDATE_INTERVAL, CONF_STATIONS
+from .const import (
+    DOMAIN,
+    LIVE_API_URL,
+    ALERTS_API_URL,
+    VEHICLES_API_URL,
+    UPDATE_INTERVAL,
+    CONF_STATIONS,
+    CONF_REFRESH_INTERVAL,
+    DEFAULT_REFRESH_INTERVAL,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -196,12 +205,13 @@ def _parse_alerts(raw: Any) -> list[dict]:
 
 class StptTransitCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry, stations_map: dict | None = None, line_config: dict | None = None) -> None:
+        interval = entry.options.get(CONF_REFRESH_INTERVAL, DEFAULT_REFRESH_INTERVAL)
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
             config_entry=entry,
-            update_interval=timedelta(seconds=UPDATE_INTERVAL),
+            update_interval=timedelta(seconds=interval),
             always_update=True,
         )
         self._stations_map = stations_map if stations_map is not None else {}
@@ -324,7 +334,29 @@ class StptTransitCoordinator(DataUpdateCoordinator):
         except (aiohttp.ClientError, TimeoutError, json.JSONDecodeError):
             return self._alerts_cache or []
 
+    async def _fetch_vehicles(self) -> dict:
+        try:
+            async with self._session.get(VEHICLES_API_URL, headers=REQUEST_HEADERS, timeout=10) as resp:
+                if resp.status != 200:
+                    return {"total": 0, "vehicles": [], "by_line": []}
+                raw = await resp.json()
+                if not isinstance(raw, dict) or not raw.get("success"):
+                    return {"total": 0, "vehicles": [], "by_line": []}
+                data = raw.get("data", {})
+                return {
+                    "total": data.get("total", 0),
+                    "vehicles": data.get("vehicles", []),
+                    "by_line": data.get("byLine", {}),
+                }
+        except (aiohttp.ClientError, TimeoutError, json.JSONDecodeError):
+            return {"total": 0, "vehicles": [], "by_line": {}}
+
     async def _async_update_data(self) -> dict[str, Any]:
+        _interval = self.config_entry.options.get(CONF_REFRESH_INTERVAL, DEFAULT_REFRESH_INTERVAL)
+        desired = timedelta(seconds=_interval)
+        if self.update_interval != desired:
+            self.update_interval = desired
+
         stations = self._get_stations()
         result = {}
         for station in stations:
@@ -359,4 +391,5 @@ class StptTransitCoordinator(DataUpdateCoordinator):
             result[stop_id] = {"arrivals": arrivals, "error": error, "source": source}
 
         result["alerts"] = await self._fetch_alerts()
+        result["vehicles"] = await self._fetch_vehicles()
         return result

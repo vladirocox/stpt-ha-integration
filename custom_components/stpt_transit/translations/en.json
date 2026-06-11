@@ -73,6 +73,13 @@
           "data": {
             "stop_id": "Station"
           }
+        },
+        "settings": {
+          "title": "Global Settings",
+          "data": {
+            "refresh_interval": "Refresh interval (seconds)"
+          },
+          "description": "How often to poll the STPT API (5-120 seconds). Lower values give more frequent updates but increase API load."
         }
       }
     }
@@ -150,6 +157,13 @@
           "data": {
             "stop_id": "Sta\u021bie"
           }
+        },
+        "settings": {
+          "title": "Set\u0103ri globale",
+          "data": {
+            "refresh_interval": "Interval re\u00eemprosp\u0103tare (secunde)"
+          },
+          "description": "C\u00e2t de des s\u0103 fie interogat API-ul STPT (5-120 secunde). Valori mai mici actualizeaz\u0103 mai frecvent dar cresc \u00eenc\u0103rcarea API."
         }
       }
     }

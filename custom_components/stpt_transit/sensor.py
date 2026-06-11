@@ -53,6 +53,7 @@ async def async_setup_entry(
             entities.append(StptArrivalsSensor(coordinator, stop_id, name, station_info))
 
     entities.append(StptLatestAlertSensor(coordinator))
+    entities.append(StptVehiclesSensor(coordinator))
     async_add_entities(entities, update_before_add=True)
 
 
@@ -294,4 +295,51 @@ class StptLatestAlertSensor(CoordinatorEntity, SensorEntity):
         else:
             self._attr_native_value = None
             self._attr_extra_state_attributes = {}
+        self.async_write_ha_state()
+
+
+class StptVehiclesSensor(CoordinatorEntity, SensorEntity):
+    _attr_has_entity_name = True
+
+    def __init__(self, coordinator: StptTransitCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_vehicles"
+        self._attr_name = "STPT Vehicles"
+        self._attr_icon = "mdi:bus-multiple"
+        self._attr_attribution = ATTRIBUTION
+        self._attr_native_value = 0
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._handle_coordinator_update()
+
+    def _handle_coordinator_update(self) -> None:
+        data = self.coordinator.data or {}
+        vehicles_data = data.get("vehicles", {})
+        if not isinstance(vehicles_data, dict):
+            vehicles_data = {}
+
+        total = vehicles_data.get("total", 0)
+        by_line = vehicles_data.get("by_line", {})
+        vehicles = vehicles_data.get("vehicles", [])
+
+        if isinstance(by_line, dict):
+            by_line_dict = {str(k): v for k, v in by_line.items()}
+        elif isinstance(by_line, list):
+            by_line_dict = {}
+            for entry in by_line:
+                if isinstance(entry, dict):
+                    line = str(entry.get("line", ""))
+                    count = entry.get("count", 0)
+                    if line:
+                        by_line_dict[line] = count
+        else:
+            by_line_dict = {}
+
+        self._attr_native_value = total
+        self._attr_extra_state_attributes = {
+            "total_vehicles": total,
+            "by_line": by_line_dict,
+            "vehicle_count": len(vehicles),
+        }
         self.async_write_ha_state()

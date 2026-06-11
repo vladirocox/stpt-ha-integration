@@ -11,7 +11,15 @@ from homeassistant.config_entries import ConfigFlow, ConfigEntry, OptionsFlow
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, SelectSelector, SelectSelectorConfig
 
-from .const import DOMAIN, CONF_STATIONS, CONF_STOP_ID, CONF_NAME, CONF_LINES
+from .const import (
+    DOMAIN,
+    CONF_STATIONS,
+    CONF_STOP_ID,
+    CONF_NAME,
+    CONF_LINES,
+    CONF_REFRESH_INTERVAL,
+    DEFAULT_REFRESH_INTERVAL,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -219,6 +227,12 @@ class StptTransitOptionsFlow(OptionsFlow):
         self._add_results: list[dict] | None = None
         self._add_selected: dict | None = None
 
+    def _options_data(self, extra_data: dict | None = None) -> dict:
+        data = dict(self._config_entry.options)
+        if extra_data:
+            data.update(extra_data)
+        return data
+
     def _current_stations(self) -> list[dict]:
         data = list(self._config_entry.data.get(CONF_STATIONS, []))
         opts = self._config_entry.options.get(CONF_STATIONS, [])
@@ -238,13 +252,16 @@ class StptTransitOptionsFlow(OptionsFlow):
                 return await self.async_step_add_manual()
             if action == "remove":
                 return await self.async_step_remove_station()
-            return self.async_create_entry(title="", data={})
+            if action == "settings":
+                return await self.async_step_settings()
+            return self.async_create_entry(title="", data=self._options_data())
 
         current = self._current_stations()
         actions = {
             "add_search": "Search by name to add",
             "add_manual": "Enter stop ID to add",
             "remove": "Remove a station",
+            "settings": "Configure global settings",
         }
         return self.async_show_form(
             step_id="init",
@@ -322,7 +339,7 @@ class StptTransitOptionsFlow(OptionsFlow):
             stations = self._current_stations()
             stations.append(station)
             self._add_selected = None
-            return self.async_create_entry(title="", data={CONF_STATIONS: stations})
+            return self.async_create_entry(title="", data=self._options_data({CONF_STATIONS: stations}))
 
         stop_id = self._add_selected[CONF_STOP_ID]
         name = self._add_selected.get(CONF_NAME, "") or stop_id
@@ -331,7 +348,7 @@ class StptTransitOptionsFlow(OptionsFlow):
             stations = self._current_stations()
             stations.append(dict(self._add_selected))
             self._add_selected = None
-            return self.async_create_entry(title="", data={CONF_STATIONS: stations})
+            return self.async_create_entry(title="", data=self._options_data({CONF_STATIONS: stations}))
 
         options = {line: f"Line {line}" for line in available}
         return self.async_show_form(
@@ -358,12 +375,26 @@ class StptTransitOptionsFlow(OptionsFlow):
             }),
         )
 
+    async def async_step_settings(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        if user_input is not None:
+            return self.async_create_entry(title="", data=self._options_data(user_input))
+
+        current = self._config_entry.options.get(CONF_REFRESH_INTERVAL, DEFAULT_REFRESH_INTERVAL)
+        return self.async_show_form(
+            step_id="settings",
+            data_schema=vol.Schema({
+                vol.Required(CONF_REFRESH_INTERVAL, default=current): vol.All(
+                    vol.Coerce(int), vol.Range(min=5, max=120)
+                ),
+            }),
+        )
+
     async def async_step_remove_station(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         current = self._current_stations()
         if user_input is not None:
             to_remove = user_input.get("stop_id", "")
             stations = [s for s in current if s.get(CONF_STOP_ID) != to_remove]
-            return self.async_create_entry(title="", data={CONF_STATIONS: stations})
+            return self.async_create_entry(title="", data=self._options_data({CONF_STATIONS: stations}))
 
         options = {s.get(CONF_STOP_ID): f"{s.get(CONF_STOP_ID)} - {s.get(CONF_NAME, '')}" for s in current}
         return self.async_show_form(
