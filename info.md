@@ -4,8 +4,10 @@ Monitor STPT stations in real time.
 
 ## Features
 
-- Real-time arrivals from live.stpt.ro (15s polling)
+- Real-time arrivals from live.stpt.ro (configurable polling)
 - Schedule fallback from smtt.ro when live API is empty
+- Per-line sensors showing minutes until next arrival
+- Vehicle tracking with per-line breakdown
 - Multiple configurable stations
 - Map support via lat/lon attributes
 - 900+ station coordinates bundled

@@ -7,14 +7,15 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 
 ## Features
 
-- **Real-time arrivals** — polls `live.stpt.ro` every 15 seconds (12s server cache)
+- **Real-time arrivals** — polls `live.stpt.ro` at a configurable interval (default 10s, range 5-120s)
 - **Schedule fallback** — when live API returns no data (late night, holidays), falls back to scraped schedule from `smtt.ro` (1h cache)
-- **Station search** — add stations by searching their name (e.g. "Gara de Nord"), no need to know stop IDs
 - **Multiple stations** — track any number of stations; add/remove anytime via UI
+- **Per-line sensors** — each line at a station gets its own sensor showing minutes until next arrival
+- **Vehicle tracking** — total active vehicles with per-line breakdown
 - **Map support** — each sensor exposes `latitude` / `longitude` attributes for the built-in HA Map card
-- **Automation-ready** — sensor state is a numeric minute value, works with `numeric_state` triggers
-- **921 stations** — full route network coordinates bundled
-- **73 lines config** — complete line-to-stop mapping for schedule fallbacks
+- **900+ stations** — full route network coordinates bundled
+- **Alert monitoring** — binary sensor for active STPT alerts
+- **Configurable polling** — refresh interval adjustable from 5 to 120 seconds
 - **Dual language** — English and Romanian UI translations
 
 ## Installation
@@ -36,14 +37,22 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 
 1. Go to **Settings → Devices & Services → Add Integration**
 2. Search for **"STPT Transit"**
-3. Choose how to add a station:
-   - **Search by name** — type a name like `Gara` or `Catedrala`, pick from results
-   - **Enter stop ID** — type the numeric ID directly if you know it
- 4. After setup, use **Configure** to add more stations or remove existing ones
+3. Enter the **stop ID** (e.g. `74` for Gara de Nord)
+4. Optionally pick which lines to track at that station
+5. After setup, use **Configure** to add more stations or remove existing ones
+
+### Finding a stop ID
+
+1. Open Google Maps and navigate to the bus/tram stop
+2. Tap the stop marker — a popup shows details
+3. Look for the **stop number** (STPT stop IDs are numeric, e.g. `74`, `836`, `1122`)
+4. Enter that number in the integration setup
+
+Alternatively, visit `https://live.stpt.ro`, search for your station, and note the `stopid=N` parameter in the URL.
 
 ## Sensors
 
-Each station creates one sensor named after the station. The sensor state is the **minutes until the next arrival** (numeric, suitable for automations).
+Each station creates a sensor per tracked line. The sensor state is the **minutes until the next arrival** (numeric, suitable for automations).
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
@@ -51,15 +60,18 @@ Each station creates one sensor named after the station. The sensor state is the
 | `unit_of_measurement` | `min` | For graphing |
 | `stop_id` | str | STPT stop ID |
 | `station_name` | str | Human-readable station name |
+| `line` | str | Line number |
 | `latitude` | float | For Map card |
 | `longitude` | float | For Map card |
 | `source` | str | `"live"` (from API) or `"schedule"` (scraped fallback) |
 | `arrivals` | list | Full list of upcoming arrivals with line, destination, minutes, type |
-| `next_line` | str | Line number of the next arriving vehicle |
-| `next_destination` | str | Destination/headsign of the next vehicle |
+| `arrival_count` | int | Number of upcoming arrivals for this line |
+| `destination` | str | Destination of the next vehicle |
 | `next_arrival_time` | str | Scheduled arrival time (HH:MM format) |
-| `next_type` | str | `"tram"`, `"trolley"`, or `"bus"` |
+| `vehicle_type` | str | `"tram"`, `"trolley"`, or `"bus"` |
 | `error` | str or null | Error message if the fetch failed |
+
+A **Vehicles** sensor (`sensor.stpt_vehicles`) shows the total active vehicles and per-line breakdown.
 
 ## Automations
 
@@ -87,7 +99,7 @@ action:
 mode: single
 ```
 
-### Flash lights when bus arrives (state changes to 0 or new bus appears)
+### Flash lights when bus arrives
 
 ```yaml
 alias: "Bus has arrived"
@@ -156,7 +168,7 @@ content: >
   **🚏 {{ s.attributes.station_name }}** ({{ s.attributes.stop_id }})
 
   {% if s.state != 'unknown' and s.state != 'none' %}
-  Next: **Line {{ s.attributes.next_line }}** → {{ s.attributes.next_destination }}
+  Next: **Line {{ s.attributes.line }}** → {{ s.attributes.destination }}
   Arriving in **{{ s.state }} min** at {{ s.attributes.next_arrival_time }}
   {% else %}
   _No live data_
@@ -169,7 +181,8 @@ content: >
 
 ## Data Sources
 
-- **Live API**: `https://live.stpt.ro/proxy-smtt-cache.php?stopid=N` (12s cache)
+- **Live API**: `https://live.stpt.ro/proxy-smtt-cache.php?stopid=N`
+- **Vehicles API**: `https://live.stpt.ro/gtfs-vehicles.php`
 - **Schedule**: `https://smtt.ro/linie-transport-public-{LINE}/` (1h cache, scraped HTML)
 
 ## Development

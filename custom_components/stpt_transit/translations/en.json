@@ -5,37 +5,19 @@
       "step": {
         "user": {
           "title": "Add STPT Station",
-          "description": "Choose how to add a station to track.",
-          "data": {
-            "method": "Selection method"
-          }
-        },
-        "search": {
-          "title": "Search Station",
-          "description": "Type a station name or stop ID to search.",
-          "data": {
-            "query": "Station name or ID"
-          }
-        },
-        "pick_station": {
-          "title": "Select Station",
-          "description": "Choose a station from the search results.",
-          "data": {
-            "stop_id": "Station",
-            "name": "Friendly name (optional)"
-          }
-        },
-        "manual": {
-          "title": "Enter Stop ID",
-          "description": "Enter the stop ID directly (e.g. 74 for Gara de Nord).",
+          "description": "Enter the stop ID (e.g. 74 for Gara de Nord).",
           "data": {
             "stop_id": "Stop ID",
             "name": "Friendly name (optional)"
           }
+        },
+        "pick_lines": {
+          "title": "Select Lines",
+          "description": "Optionally select which lines to track at {station_name}.",
+          "data": {
+            "lines": "Lines"
+          }
         }
-      },
-      "error": {
-        "query": "No stations found. Try a different name or use manual entry."
       }
     },
     "options": {
@@ -47,25 +29,19 @@
             "action": "Action"
           }
         },
-        "add_search": {
-          "title": "Search Station",
-          "description": "Type a station name to search.",
-          "data": {
-            "query": "Station name"
-          }
-        },
-        "add_pick": {
-          "title": "Select Station",
-          "data": {
-            "stop_id": "Station",
-            "name": "Friendly name (optional)"
-          }
-        },
-        "add_manual": {
-          "title": "Enter Stop ID",
+        "add": {
+          "title": "Add Station",
+          "description": "Enter the stop ID of the station to add.",
           "data": {
             "stop_id": "Stop ID",
             "name": "Friendly name (optional)"
+          }
+        },
+        "add_lines": {
+          "title": "Select Lines",
+          "description": "Optionally select which lines to track at {station_name}.",
+          "data": {
+            "lines": "Lines"
           }
         },
         "remove_station": {
@@ -90,37 +66,19 @@
       "step": {
         "user": {
           "title": "Adaug\u0103 sta\u021bie STPT",
-          "description": "Alege cum s\u0103 adaugi o sta\u021bie.",
-          "data": {
-            "method": "Metod\u0103 de selec\u021bie"
-          }
-        },
-        "search": {
-          "title": "Caut\u0103 sta\u021bie",
-          "description": "Introdu numele sta\u021biei sau ID-ul.",
-          "data": {
-            "query": "Nume sta\u021bie sau ID"
-          }
-        },
-        "pick_station": {
-          "title": "Selecteaz\u0103 sta\u021bie",
-          "description": "Alege o sta\u021bie din rezultate.",
-          "data": {
-            "stop_id": "Sta\u021bie",
-            "name": "Nume prietenos (op\u021bional)"
-          }
-        },
-        "manual": {
-          "title": "Introdu ID sta\u021bie",
-          "description": "Introdu ID-ul sta\u021biei direct (ex: 74 pentru Gara de Nord).",
+          "description": "Introdu ID-ul sta\u021biei (ex: 74 pentru Gara de Nord).",
           "data": {
             "stop_id": "ID sta\u021bie",
             "name": "Nume prietenos (op\u021bional)"
           }
+        },
+        "pick_lines": {
+          "title": "Selecteaz\u0103 linii",
+          "description": "Selecteaz\u0103 op\u021bional liniile de monitorizat la {station_name}.",
+          "data": {
+            "lines": "Linii"
+          }
         }
-      },
-      "error": {
-        "query": "Nu s-au g\u0103sit sta\u021bii. \u00cencerca\u021bi un alt nume sau introducere manual\u0103."
       }
     },
     "options": {
@@ -132,24 +90,19 @@
             "action": "Ac\u021biune"
           }
         },
-        "add_search": {
-          "title": "Caut\u0103 sta\u021bie",
-          "data": {
-            "query": "Nume sta\u021bie"
-          }
-        },
-        "add_pick": {
-          "title": "Selecteaz\u0103 sta\u021bie",
-          "data": {
-            "stop_id": "Sta\u021bie",
-            "name": "Nume prietenos (op\u021bional)"
-          }
-        },
-        "add_manual": {
-          "title": "Introdu ID sta\u021bie",
+        "add": {
+          "title": "Adaug\u0103 sta\u021bie",
+          "description": "Introdu ID-ul sta\u021biei de ad\u0103ugat.",
           "data": {
             "stop_id": "ID sta\u021bie",
             "name": "Nume prietenos (op\u021bional)"
+          }
+        },
+        "add_lines": {
+          "title": "Selecteaz\u0103 linii",
+          "description": "Selecteaz\u0103 op\u021bional liniile de monitorizat la {station_name}.",
+          "data": {
+            "lines": "Linii"
           }
         },
         "remove_station": {

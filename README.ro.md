@@ -6,14 +6,15 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 
 ## Funcționalități
 
-- **Sosiri în timp real** — interoghează `live.stpt.ro` la fiecare 15 secunde (cache server de 12s)
+- **Sosiri în timp real** — interoghează `live.stpt.ro` la un interval configurabil (implicit 10s, interval 5-120s)
 - **Program de rezervă** — când API-ul live nu returnează date (noaptea, sărbători), folosește programul preluat de pe `smtt.ro` (cache 1h)
-- **Căutare stații** — adaugă stații căutând după nume (ex. "Gara de Nord"), fără să ai nevoie de ID-uri
 - **Stații multiple** — monitorizează oricâte stații; adaugă/elimină oricând din UI
+- **Senzori pe linie** — fiecare linie dintr-o stație are propriul senzor cu minutele până la următoarea sosire
+- **Urmărire vehicule** — numărul total de vehicule active defalcat pe linii
 - **Suport hartă** — fiecare senzor expune atributele `latitude` / `longitude` pentru cardul Hartă din HA
-- **Pregătit pentru automatizări** — starea senzorului este o valoare numerică (minute), compatibilă cu trigger-e `numeric_state`
-- **921 de stații** — rețeaua completă de rute inclusă
-- **Configurare 73 de linii** — mapare completă stații-linii pentru programul de rezervă
+- **900+ stații** — rețeaua completă de rute inclusă
+- **Monitorizare alerte** — senzor binar pentru alertele STPT active
+- **Interogare configurabilă** — intervalul de reîmprospătare ajustabil între 5 și 120 de secunde
 - **Limbă dublă** — traduceri în engleză și română
 
 ## Instalare
@@ -35,14 +36,22 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 
 1. Mergi la **Settings → Devices & Services → Add Integration**
 2. Caută **"STPT Transit"**
-3. Alege cum să adaugi o stație:
-   - **Caută după nume** — tastează un nume ca `Gara` sau `Catedrala`, alege din rezultate
-   - **Introdu stop ID** — tastează ID-ul numeric direct dacă îl știi
- 4. După configurare, folosește **Configure** pentru a adăuga sau elimina stații
+3. Introdu **ID-ul stației** (ex: `74` pentru Gara de Nord)
+4. Opțional, selectează liniile de monitorizat la acea stație
+5. După configurare, folosește **Configure** pentru a adăuga sau elimina stații
+
+### Cum găsești ID-ul unei stații
+
+1. Deschide Google Maps și navighează la stația de autobuz/tramvai
+2. Apasă pe markerul stației — apare un popup cu detalii
+3. Caută **numărul stației** (ID-urile STPT sunt numerice, ex: `74`, `836`, `1122`)
+4. Introdu acel număr în configurarea integrării
+
+Alternativ, vizitează `https://live.stpt.ro`, caută stația și notează parametrul `stopid=N` din URL.
 
 ## Senzori
 
-Fiecare stație creează un senzor denumit după stație. Starea senzorului reprezintă **minutele până la următoarea sosire** (valoare numerică, potrivită pentru automatizări).
+Fiecare stație creează un senzor per linie monitorizată. Starea senzorului reprezintă **minutele până la următoarea sosire** (valoare numerică, potrivită pentru automatizări).
 
 | Atribut | Tip | Descriere |
 |---------|-----|-----------|
@@ -50,15 +59,18 @@ Fiecare stație creează un senzor denumit după stație. Starea senzorului repr
 | `unit_of_measurement` | `min` | Pentru grafice |
 | `stop_id` | str | ID-ul stației STPT |
 | `station_name` | str | Numele stației |
+| `line` | str | Numărul liniei |
 | `latitude` | float | Pentru cardul Hartă |
 | `longitude` | float | Pentru cardul Hartă |
 | `source` | str | `"live"` (din API) sau `"schedule"` (program de rezervă) |
 | `arrivals` | list | Lista completă a sosirilor cu linie, destinație, minute, tip |
-| `next_line` | str | Numărul liniei următorului vehicul |
-| `next_destination` | str | Destinația următorului vehicul |
+| `arrival_count` | int | Numărul de sosiri viitoare pentru această linie |
+| `destination` | str | Destinația următorului vehicul |
 | `next_arrival_time` | str | Ora programată a sosirii (format HH:MM) |
-| `next_type` | str | `"tram"`, `"trolley"` sau `"bus"` |
+| `vehicle_type` | str | `"tram"`, `"trolley"` sau `"bus"` |
 | `error` | str sau null | Mesaj de eroare dacă preluarea a eșuat |
+
+Un senzor **Vehicule** (`sensor.stpt_vehicles`) arată numărul total de vehicule active și defalcarea pe linii.
 
 ## Automatizări
 
@@ -155,7 +167,7 @@ content: >
   **🚏 {{ s.attributes.station_name }}** ({{ s.attributes.stop_id }})
 
   {% if s.state != 'unknown' and s.state != 'none' %}
-  Următorul: **Linia {{ s.attributes.next_line }}** → {{ s.attributes.next_destination }}
+  Următorul: **Linia {{ s.attributes.line }}** → {{ s.attributes.destination }}
   Sosește în **{{ s.state }} min** la {{ s.attributes.next_arrival_time }}
   {% else %}
   _Nu sunt date live_
@@ -168,7 +180,8 @@ content: >
 
 ## Surse de date
 
-- **API live**: `https://live.stpt.ro/proxy-smtt-cache.php?stopid=N` (cache 12s)
+- **API live**: `https://live.stpt.ro/proxy-smtt-cache.php?stopid=N`
+- **API vehicule**: `https://live.stpt.ro/gtfs-vehicles.php`
 - **Program**: `https://smtt.ro/linie-transport-public-{LINE}/` (cache 1h, HTML)
 
 ## Dezvoltare

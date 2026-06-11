@@ -227,23 +227,6 @@ class StptTransitCoordinator(DataUpdateCoordinator):
             return list(opts)
         return list(self.config_entry.data.get(CONF_STATIONS, []))
 
-    def search_stations(self, query: str, limit: int = 20) -> list[dict]:
-        q = query.strip().lower()
-        if not q:
-            return []
-        results = []
-        for stop_id, info in self._stations_map.items():
-            name = info[0].lower()
-            if q in name or q in stop_id:
-                results.append({
-                    "stop_id": stop_id,
-                    "name": info[0],
-                    "latitude": info[1],
-                    "longitude": info[2],
-                })
-        results.sort(key=lambda s: s["name"].lower())
-        return results[:limit]
-
     def get_station_info(self, stop_id: str) -> dict:
         info = self._stations_map.get(stop_id)
         if info:
