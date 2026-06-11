@@ -12,6 +12,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, ATTRIBUTION
 from .coordinator import StptTransitConfigEntry, StptTransitCoordinator
+from . import get_stations
 
 PLATFORMS = [Platform.SENSOR]
 _LOGGER = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ async def async_setup_entry(
 ) -> None:
     coordinator = entry.runtime_data
     entities = []
-    for station in entry.data.get("stations", []):
+    for station in get_stations(entry):
         stop_id = station["stop_id"]
         station_info = coordinator.get_station_info(stop_id)
         name = station.get("name", "") or station_info.get("name", "") or f"Station {stop_id}"
@@ -73,6 +74,10 @@ class StptArrivalsSensor(CoordinatorEntity, SensorEntity):
             "configuration_url": f"https://live.stpt.ro/?stopid={self._stop_id}",
         }
 
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._handle_coordinator_update()
+
     def _handle_coordinator_update(self) -> None:
         data = self.coordinator.data or {}
         stop_data = data.get(self._stop_id, {})
@@ -100,6 +105,7 @@ class StptArrivalsSensor(CoordinatorEntity, SensorEntity):
                 self._attr_native_unit_of_measurement = "min"
             self._attr_icon = {
                 "tram": "mdi:tram",
+                "tv": "mdi:tram",
                 "trolley": "mdi:trolley",
                 "bus": "mdi:bus",
             }.get(next_bus.get("type", ""), "mdi:bus")
@@ -111,6 +117,7 @@ class StptArrivalsSensor(CoordinatorEntity, SensorEntity):
             self._attr_native_value = None
             self._attr_native_unit_of_measurement = None
             self._attr_icon = "mdi:bus-alert"
+        self.async_write_ha_state()
 
 
 class StptLatestAlertSensor(CoordinatorEntity, SensorEntity):
@@ -123,6 +130,10 @@ class StptLatestAlertSensor(CoordinatorEntity, SensorEntity):
         self._attr_icon = "mdi:alert"
         self._attr_attribution = ATTRIBUTION
         self._attr_native_value = None
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._handle_coordinator_update()
 
     def _handle_coordinator_update(self) -> None:
         data = self.coordinator.data or {}

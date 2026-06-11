@@ -15,7 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import DOMAIN, LIVE_API_URL, ALERTS_API_URL, UPDATE_INTERVAL
+from .const import DOMAIN, LIVE_API_URL, ALERTS_API_URL, UPDATE_INTERVAL, CONF_STATIONS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -78,10 +78,10 @@ def _parse_arrivals(raw: Any) -> list[dict]:
 
 
 def _extract_minutes(item: dict) -> list[int]:
-    raw = item.get("minutes") or item.get("eta_minutes") or 0
-    if isinstance(raw, list):
+    raw = item.get("minutes")
+    if raw is not None and isinstance(raw, list):
         return [int(m) for m in raw if isinstance(m, (int, float))]
-    if isinstance(raw, (int, float)):
+    if raw is not None and isinstance(raw, (int, float)):
         return [int(raw)]
     raw_times = item.get("times") or []
     if isinstance(raw_times, list):
@@ -211,6 +211,16 @@ class StptTransitCoordinator(DataUpdateCoordinator):
         self._alerts_cache: list[dict] | None = None
         self._alerts_ts: float = 0
 
+    def _get_stations(self) -> list[dict]:
+        data = list(self.config_entry.data.get(CONF_STATIONS, []))
+        opts = self.config_entry.options.get(CONF_STATIONS, [])
+        seen = {s.get("stop_id") for s in data}
+        for s in opts:
+            if s.get("stop_id") not in seen:
+                data.append(s)
+                seen.add(s.get("stop_id"))
+        return data
+
     def search_stations(self, query: str, limit: int = 20) -> list[dict]:
         q = query.strip().lower()
         if not q:
@@ -312,7 +322,7 @@ class StptTransitCoordinator(DataUpdateCoordinator):
             return self._alerts_cache or []
 
     async def _async_update_data(self) -> dict[str, Any]:
-        stations = self.config_entry.data.get("stations", [])
+        stations = self._get_stations()
         result = {}
         for station in stations:
             stop_id = station["stop_id"]

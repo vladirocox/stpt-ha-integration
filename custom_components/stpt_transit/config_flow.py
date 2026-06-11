@@ -150,6 +150,16 @@ class StptTransitOptionsFlow(OptionsFlow):
         self._config_entry = config_entry
         self._add_results: list[dict] | None = None
 
+    def _current_stations(self) -> list[dict]:
+        data = list(self._config_entry.data.get(CONF_STATIONS, []))
+        opts = self._config_entry.options.get(CONF_STATIONS, [])
+        seen = {s.get(CONF_STOP_ID) for s in data}
+        for s in opts:
+            if s.get(CONF_STOP_ID) not in seen:
+                data.append(s)
+                seen.add(s.get(CONF_STOP_ID))
+        return data
+
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input is not None:
             action = user_input.get("action")
@@ -161,7 +171,7 @@ class StptTransitOptionsFlow(OptionsFlow):
                 return await self.async_step_remove_station()
             return self.async_create_entry(title="", data={})
 
-        current = self._config_entry.data.get(CONF_STATIONS, [])
+        current = self._current_stations()
         actions = {
             "add_search": "Search by name to add",
             "add_manual": "Enter stop ID to add",
@@ -212,13 +222,12 @@ class StptTransitOptionsFlow(OptionsFlow):
 
     async def async_step_add_pick(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input is not None:
-            stations = list(self._config_entry.data.get(CONF_STATIONS, []))
+            stations = self._current_stations()
             stop_id = user_input.get(CONF_STOP_ID)
             name = user_input.get(CONF_NAME, "")
             stations.append({"stop_id": stop_id, "name": name or ""})
-            self.hass.config_entries.async_update_entry(self._config_entry, data={CONF_STATIONS: stations})
             self._add_results = None
-            return self.async_create_entry(title="", data={})
+            return self.async_create_entry(title="", data={CONF_STATIONS: stations})
 
         results = self._add_results
         if not results:
@@ -235,10 +244,9 @@ class StptTransitOptionsFlow(OptionsFlow):
 
     async def async_step_add_manual(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input is not None:
-            stations = list(self._config_entry.data.get(CONF_STATIONS, []))
+            stations = self._current_stations()
             stations.append({"stop_id": user_input[CONF_STOP_ID], "name": user_input.get(CONF_NAME, "") or ""})
-            self.hass.config_entries.async_update_entry(self._config_entry, data={CONF_STATIONS: stations})
-            return self.async_create_entry(title="", data={})
+            return self.async_create_entry(title="", data={CONF_STATIONS: stations})
 
         return self.async_show_form(
             step_id="add_manual",
@@ -249,12 +257,11 @@ class StptTransitOptionsFlow(OptionsFlow):
         )
 
     async def async_step_remove_station(self, user_input: dict[str, Any] | None = None) -> FlowResult:
-        current = self._config_entry.data.get(CONF_STATIONS, [])
+        current = self._current_stations()
         if user_input is not None:
             to_remove = user_input.get("stop_id", "")
             stations = [s for s in current if s.get(CONF_STOP_ID) != to_remove]
-            self.hass.config_entries.async_update_entry(self._config_entry, data={CONF_STATIONS: stations})
-            return self.async_create_entry(title="", data={})
+            return self.async_create_entry(title="", data={CONF_STATIONS: stations})
 
         options = {s.get(CONF_STOP_ID): f"{s.get(CONF_STOP_ID)} - {s.get(CONF_NAME, '')}" for s in current}
         return self.async_show_form(

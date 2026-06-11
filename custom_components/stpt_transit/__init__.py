@@ -7,12 +7,23 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 
-from .const import DOMAIN
+from .const import DOMAIN, CONF_STATIONS
 from .coordinator import StptTransitCoordinator, StptTransitConfigEntry, _load_stations_map, _load_line_config
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
 _LOGGER = logging.getLogger(__name__)
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
+
+
+def get_stations(entry) -> list[dict]:
+    data = list(entry.data.get(CONF_STATIONS, []))
+    opts = entry.options.get(CONF_STATIONS, [])
+    seen = {s.get("stop_id") for s in data}
+    for s in opts:
+        if s.get("stop_id") not in seen:
+            data.append(s)
+            seen.add(s.get("stop_id"))
+    return data
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: StptTransitConfigEntry) -> bool:
