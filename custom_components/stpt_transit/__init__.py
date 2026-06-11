@@ -17,14 +17,10 @@ CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
 
 def get_stations(entry) -> list[dict]:
-    data = list(entry.data.get(CONF_STATIONS, []))
-    opts = entry.options.get(CONF_STATIONS, [])
-    seen = {s.get("stop_id") for s in data}
-    for s in opts:
-        if s.get("stop_id") not in seen:
-            data.append(s)
-            seen.add(s.get("stop_id"))
-    return data
+    opts = entry.options.get(CONF_STATIONS)
+    if opts is not None:
+        return list(opts)
+    return list(entry.data.get(CONF_STATIONS, []))
 
 
 async def _async_register_panel(hass: HomeAssistant) -> None:

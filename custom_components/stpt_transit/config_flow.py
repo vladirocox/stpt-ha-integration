@@ -234,14 +234,10 @@ class StptTransitOptionsFlow(OptionsFlow):
         return data
 
     def _current_stations(self) -> list[dict]:
-        data = list(self._config_entry.data.get(CONF_STATIONS, []))
-        opts = self._config_entry.options.get(CONF_STATIONS, [])
-        seen = {s.get(CONF_STOP_ID) for s in data}
-        for s in opts:
-            if s.get(CONF_STOP_ID) not in seen:
-                data.append(s)
-                seen.add(s.get(CONF_STOP_ID))
-        return data
+        opts = self._config_entry.options.get(CONF_STATIONS)
+        if opts is not None:
+            return list(opts)
+        return list(self._config_entry.data.get(CONF_STATIONS, []))
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input is not None:

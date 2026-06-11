@@ -222,14 +222,10 @@ class StptTransitCoordinator(DataUpdateCoordinator):
         self._alerts_ts: float = 0
 
     def _get_stations(self) -> list[dict]:
-        data = list(self.config_entry.data.get(CONF_STATIONS, []))
-        opts = self.config_entry.options.get(CONF_STATIONS, [])
-        seen = {s.get("stop_id") for s in data}
-        for s in opts:
-            if s.get("stop_id") not in seen:
-                data.append(s)
-                seen.add(s.get("stop_id"))
-        return data
+        opts = self.config_entry.options.get(CONF_STATIONS)
+        if opts is not None:
+            return list(opts)
+        return list(self.config_entry.data.get(CONF_STATIONS, []))
 
     def search_stations(self, query: str, limit: int = 20) -> list[dict]:
         q = query.strip().lower()
