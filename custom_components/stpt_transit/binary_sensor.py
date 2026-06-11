@@ -36,6 +36,8 @@ class StptAlertsBinarySensor(CoordinatorEntity, BinarySensorEntity):
         self._attr_should_poll = False
         self._attr_extra_state_attributes = {
             "alert_count": 0,
+            "latest_title": None,
+            "latest_description": None,
             "alerts": [],
         }
 
@@ -51,8 +53,11 @@ class StptAlertsBinarySensor(CoordinatorEntity, BinarySensorEntity):
         if not isinstance(alerts, list):
             alerts = []
 
+        latest = alerts[0] if alerts else None
         self._attr_extra_state_attributes = {
             "alert_count": len(alerts),
+            "latest_title": (latest.get("title") or "") if latest else None,
+            "latest_description": (latest.get("description") or "") if latest else None,
             "alerts": alerts,
         }
 

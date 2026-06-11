@@ -47,6 +47,9 @@ class StptTransitConfigFlow(ConfigFlow, domain=DOMAIN):
     VERSION = 1
     MINOR_VERSION = 1
 
+    def __init__(self) -> None:
+        self._search_results: list[dict] | None = None
+
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input is not None:
             method = user_input.get("method", "search")
@@ -71,7 +74,10 @@ class StptTransitConfigFlow(ConfigFlow, domain=DOMAIN):
                     }),
                     errors={"query": "Enter a station name or stop ID"},
                 )
-            results = await self.hass.async_add_executor_job(_search_stations, query)
+            try:
+                results = await self.hass.async_add_executor_job(_search_stations, query)
+            except Exception:
+                results = None
             if not results:
                 return self.async_show_form(
                     step_id="search",
@@ -80,8 +86,10 @@ class StptTransitConfigFlow(ConfigFlow, domain=DOMAIN):
                     }),
                     errors={"query": "No stations found. Try a different name or use manual entry."},
                 )
-            return await self.async_step_pick_station(results)
+            self._search_results = results
+            return await self.async_step_pick_station()
 
+        self._search_results = None
         return self.async_show_form(
             step_id="search",
             data_schema=vol.Schema({
@@ -89,13 +97,15 @@ class StptTransitConfigFlow(ConfigFlow, domain=DOMAIN):
             }),
         )
 
-    async def async_step_pick_station(self, results: list[dict] | None = None, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_pick_station(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input is not None:
             stop_id = user_input.get(CONF_STOP_ID)
             name = user_input.get(CONF_NAME, "")
             stations = [{"stop_id": stop_id, "name": name or ""}]
+            self._search_results = None
             return self.async_create_entry(title=f"STPT {stop_id}", data={CONF_STATIONS: stations})
 
+        results = self._search_results
         if not results:
             return await self.async_step_search()
 
@@ -129,6 +139,7 @@ class StptTransitConfigFlow(ConfigFlow, domain=DOMAIN):
 class StptTransitOptionsFlow(OptionsFlow):
     def __init__(self, config_entry: ConfigEntry) -> None:
         self._config_entry = config_entry
+        self._add_results: list[dict] | None = None
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input is not None:
@@ -166,7 +177,10 @@ class StptTransitOptionsFlow(OptionsFlow):
                     }),
                     errors={"query": "Enter a station name"},
                 )
-            results = await self.hass.async_add_executor_job(_search_stations, query)
+            try:
+                results = await self.hass.async_add_executor_job(_search_stations, query)
+            except Exception:
+                results = None
             if not results:
                 return self.async_show_form(
                     step_id="add_search",
@@ -175,8 +189,10 @@ class StptTransitOptionsFlow(OptionsFlow):
                     }),
                     errors={"query": "No stations found"},
                 )
-            return await self.async_step_add_pick(results)
+            self._add_results = results
+            return await self.async_step_add_pick()
 
+        self._add_results = None
         return self.async_show_form(
             step_id="add_search",
             data_schema=vol.Schema({
@@ -184,15 +200,17 @@ class StptTransitOptionsFlow(OptionsFlow):
             }),
         )
 
-    async def async_step_add_pick(self, results: list[dict] | None = None, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_add_pick(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input is not None:
             stations = list(self._config_entry.data.get(CONF_STATIONS, []))
             stop_id = user_input.get(CONF_STOP_ID)
             name = user_input.get(CONF_NAME, "")
             stations.append({"stop_id": stop_id, "name": name or ""})
             self.hass.config_entries.async_update_entry(self._config_entry, data={CONF_STATIONS: stations})
+            self._add_results = None
             return self.async_create_entry(title="", data={})
 
+        results = self._add_results
         if not results:
             return await self.async_step_add_search()
 
