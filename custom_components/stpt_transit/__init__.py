@@ -16,13 +16,26 @@ CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: StptTransitConfigEntry) -> bool:
-    stations_map = await hass.async_add_executor_job(_load_stations_map)
-    line_config = await hass.async_add_executor_job(_load_line_config)
+    try:
+        stations_map = await hass.async_add_executor_job(_load_stations_map)
+        line_config = await hass.async_add_executor_job(_load_line_config)
+    except Exception as err:
+        _LOGGER.error("Failed to load station data: %s", err)
+        return False
+
     coordinator = StptTransitCoordinator(hass, entry, stations_map, line_config)
     await coordinator.async_config_entry_first_refresh()
+
+    if not coordinator.last_update_success:
+        _LOGGER.warning("Initial coordinator refresh failed, continuing setup")
+
     entry.runtime_data = coordinator
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {"coordinator": coordinator}
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    try:
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    except Exception as err:
+        _LOGGER.error("Failed to set up platforms: %s", err)
+        return False
     entry.async_on_unload(entry.add_update_listener(async_update_entry))
     return True
 

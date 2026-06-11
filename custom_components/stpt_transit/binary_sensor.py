@@ -25,7 +25,6 @@ async def async_setup_entry(
 
 class StptAlertsBinarySensor(CoordinatorEntity, BinarySensorEntity):
     _attr_has_entity_name = True
-    _attr_device_class = "problem"
 
     def __init__(self, coordinator: StptTransitCoordinator) -> None:
         super().__init__(coordinator)
@@ -34,12 +33,6 @@ class StptAlertsBinarySensor(CoordinatorEntity, BinarySensorEntity):
         self._attr_icon = "mdi:alert-circle"
         self._attr_attribution = ATTRIBUTION
         self._attr_should_poll = False
-        self._attr_extra_state_attributes = {
-            "alert_count": 0,
-            "latest_title": None,
-            "latest_description": None,
-            "alerts": [],
-        }
 
     @property
     def is_on(self) -> bool:
@@ -47,18 +40,15 @@ class StptAlertsBinarySensor(CoordinatorEntity, BinarySensorEntity):
         alerts = data.get("alerts", [])
         return isinstance(alerts, list) and len(alerts) > 0
 
-    def _handle_coordinator_update(self) -> None:
+    @property
+    def extra_state_attributes(self) -> dict:
         data = self.coordinator.data or {}
         alerts = data.get("alerts", [])
         if not isinstance(alerts, list):
             alerts = []
-
         latest = alerts[0] if alerts else None
-        self._attr_extra_state_attributes = {
+        return {
             "alert_count": len(alerts),
             "latest_title": (latest.get("title") or "") if latest else None,
             "latest_description": (latest.get("description") or "") if latest else None,
-            "alerts": alerts,
         }
-
-        self.async_write_ha_state()

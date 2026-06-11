@@ -148,6 +148,15 @@ def _compute_minutes_from_now(time_str: str) -> int:
     return max(1, int(round(delta)))
 
 
+def _extract_alert_text(value: Any) -> str:
+    if isinstance(value, dict):
+        translations = value.get("translation", [])
+        if translations and isinstance(translations, list) and isinstance(translations[0], dict):
+            return str(translations[0].get("text", "")).strip()
+        return str(value).strip()
+    return str(value).strip() if value is not None else ""
+
+
 def _parse_alerts(raw: Any) -> list[dict]:
     if isinstance(raw, dict):
         raw = raw.get("alerts") or raw.get("entity") or []
@@ -160,23 +169,23 @@ def _parse_alerts(raw: Any) -> list[dict]:
         item_alert = item.get("alert")
         alert = item_alert if isinstance(item_alert, dict) else item
         title = (
-            alert.get("header_text")
-            or alert.get("headerText")
-            or alert.get("title")
-            or alert.get("header")
+            _extract_alert_text(alert.get("header_text"))
+            or _extract_alert_text(alert.get("headerText"))
+            or _extract_alert_text(alert.get("title"))
+            or _extract_alert_text(alert.get("header"))
             or ""
         )
         description = (
-            alert.get("description_text")
-            or alert.get("descriptionText")
-            or alert.get("description")
-            or alert.get("text")
+            _extract_alert_text(alert.get("description_text"))
+            or _extract_alert_text(alert.get("descriptionText"))
+            or _extract_alert_text(alert.get("description"))
+            or _extract_alert_text(alert.get("text"))
             or ""
         )
         result.append({
             "id": str(item.get("id") or alert.get("id") or ""),
-            "title": str(title).strip(),
-            "description": str(description).strip(),
+            "title": title,
+            "description": description,
             "cause": str(alert.get("cause") or ""),
             "effect": str(alert.get("effect") or ""),
             "start": alert.get("start"),

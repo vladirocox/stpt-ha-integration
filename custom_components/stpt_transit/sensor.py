@@ -30,6 +30,7 @@ async def async_setup_entry(
         station_info = coordinator.get_station_info(stop_id)
         name = station.get("name", "") or station_info.get("name", "") or f"Station {stop_id}"
         entities.append(StptArrivalsSensor(coordinator, stop_id, name, station_info))
+    entities.append(StptLatestAlertSensor(coordinator))
     async_add_entities(entities, update_before_add=True)
 
 
@@ -110,3 +111,33 @@ class StptArrivalsSensor(CoordinatorEntity, SensorEntity):
             self._attr_native_value = None
             self._attr_native_unit_of_measurement = None
             self._attr_icon = "mdi:bus-alert"
+
+
+class StptLatestAlertSensor(CoordinatorEntity, SensorEntity):
+    _attr_has_entity_name = True
+
+    def __init__(self, coordinator: StptTransitCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_latest_alert"
+        self._attr_name = "STPT Latest Alert"
+        self._attr_icon = "mdi:alert"
+        self._attr_attribution = ATTRIBUTION
+        self._attr_native_value = None
+
+    def _handle_coordinator_update(self) -> None:
+        data = self.coordinator.data or {}
+        alerts = data.get("alerts", [])
+        if not isinstance(alerts, list):
+            alerts = []
+        latest = alerts[0] if alerts else None
+        if latest:
+            self._attr_native_value = latest.get("title", "")
+            self._attr_extra_state_attributes = {
+                "description": latest.get("description", ""),
+                "cause": latest.get("cause", ""),
+                "effect": latest.get("effect", ""),
+            }
+        else:
+            self._attr_native_value = None
+            self._attr_extra_state_attributes = {}
+        self.async_write_ha_state()
