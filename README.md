@@ -39,18 +39,7 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 3. Choose how to add a station:
    - **Search by name** — type a name like `Gara` or `Catedrala`, pick from results
    - **Enter stop ID** — type the numeric ID directly if you know it
-4. After setup, use **Configure** to add more stations or remove existing ones
-
-### Common station search terms
-
-| Search | Finds |
-|--------|-------|
-| `Gara` | Gara de Nord, Gara de Est |
-| `Catedrala` | Catedrala Mitropolitană |
-| `Piața` | All Piața stations |
-| `Spitalul` | Spitalul de Copii, Spitalul Victor Babeș |
-| `Shopping` | Shopping City |
-| `836` | Serena (by stop ID) |
+ 4. After setup, use **Configure** to add more stations or remove existing ones
 
 ## Sensors
 

@@ -38,18 +38,7 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 3. Alege cum să adaugi o stație:
    - **Caută după nume** — tastează un nume ca `Gara` sau `Catedrala`, alege din rezultate
    - **Introdu stop ID** — tastează ID-ul numeric direct dacă îl știi
-4. După configurare, folosește **Configure** pentru a adăuga sau elimina stații
-
-### Termeni de căutare comune
-
-| Căutare | Rezultate |
-|---------|-----------|
-| `Gara` | Gara de Nord, Gara de Est |
-| `Catedrala` | Catedrala Mitropolitană |
-| `Piața` | Toate stațiile Piața |
-| `Spitalul` | Spitalul de Copii, Spitalul Victor Babeș |
-| `Shopping` | Shopping City |
-| `836` | Serena (după stop ID) |
+ 4. După configurare, folosește **Configure** pentru a adăuga sau elimina stații
 
 ## Senzori
 
