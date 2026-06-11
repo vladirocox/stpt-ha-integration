@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.helpers import entity_registry as er
 
 from .const import DOMAIN, ATTRIBUTION
 from .coordinator import StptTransitConfigEntry, StptTransitCoordinator
@@ -26,13 +27,151 @@ async def async_setup_entry(
 ) -> None:
     coordinator = entry.runtime_data
     entities = []
+    data = coordinator.data or {}
+
+    _cleanup_old_entities(hass, entry)
+
     for station in get_stations(entry):
         stop_id = station["stop_id"]
         station_info = coordinator.get_station_info(stop_id)
         name = station.get("name", "") or station_info.get("name", "") or f"Station {stop_id}"
-        entities.append(StptArrivalsSensor(coordinator, stop_id, name, station_info))
+
+        lines = _discover_lines(coordinator, stop_id, data)
+
+        if lines:
+            for line in sorted(lines):
+                entities.append(StptLineSensor(coordinator, stop_id, line, name, station_info))
+        else:
+            _LOGGER.warning(
+                "No lines discovered for station %s (%s), creating legacy sensor",
+                stop_id, name,
+            )
+            entities.append(StptArrivalsSensor(coordinator, stop_id, name, station_info))
+
     entities.append(StptLatestAlertSensor(coordinator))
     async_add_entities(entities, update_before_add=True)
+
+
+def _cleanup_old_entities(hass: HomeAssistant, entry: StptTransitConfigEntry) -> None:
+    ent_reg = er.async_get(hass)
+    known_new = {f"{entry.entry_id}_latest_alert", f"{entry.entry_id}_alerts"}
+    for entity_entry in list(er.async_entries_for_config_entry(ent_reg, entry.entry_id)):
+        uid = entity_entry.unique_id
+        if uid.startswith(f"{entry.entry_id}_") and uid not in known_new:
+            remainder = uid[len(entry.entry_id) + 1:]
+            if remainder.isdigit():
+                _LOGGER.debug("Removing orphaned entity %s (unique_id: %s)", entity_entry.entity_id, uid)
+                ent_reg.async_remove(entity_entry.entity_id)
+
+
+def _discover_lines(
+    coordinator: StptTransitCoordinator, stop_id: str, data: dict
+) -> set[str]:
+    lines = set()
+
+    stop_data = data.get(stop_id, {})
+    for arrival in stop_data.get("arrivals", []):
+        line = arrival.get("line", "")
+        if line:
+            lines.add(str(line).strip())
+
+    for line_info in coordinator.get_lines_for_stop(stop_id):
+        line = line_info.get("line", "")
+        if line:
+            lines.add(str(line).strip())
+
+    return lines
+
+
+class StptLineSensor(CoordinatorEntity, SensorEntity):
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: StptTransitCoordinator,
+        stop_id: str,
+        line: str,
+        station_name: str,
+        station_info: dict,
+    ) -> None:
+        super().__init__(coordinator)
+        self._stop_id = stop_id
+        self._line = line
+        self._station_name = station_name
+        self._station_info = station_info
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_{stop_id}_{line}"
+        self._attr_name = line
+        self._attr_icon = "mdi:bus"
+        self._attr_attribution = ATTRIBUTION
+        self._attr_extra_state_attributes = {
+            "stop_id": stop_id,
+            "station_name": station_name,
+            "line": line,
+            "latitude": station_info.get("latitude", 0),
+            "longitude": station_info.get("longitude", 0),
+            "source": None,
+            "arrivals": [],
+        }
+
+    @property
+    def device_info(self) -> dict:
+        return {
+            "identifiers": {(DOMAIN, self._stop_id)},
+            "name": self._station_name,
+            "manufacturer": "STPT",
+            "model": "Bus Station",
+            "entry_type": None,
+            "sw_version": "1.0",
+            "configuration_url": f"https://live.stpt.ro/?stopid={self._stop_id}",
+        }
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._handle_coordinator_update()
+
+    def _handle_coordinator_update(self) -> None:
+        data = self.coordinator.data or {}
+        stop_data = data.get(self._stop_id, {})
+        all_arrivals = stop_data.get("arrivals", [])
+        source = stop_data.get("source", "live")
+
+        line_arrivals = [a for a in all_arrivals if str(a.get("line", "")).strip() == self._line]
+
+        self._attr_extra_state_attributes = {
+            "stop_id": self._stop_id,
+            "station_name": self._station_name,
+            "line": self._line,
+            "latitude": self._station_info.get("latitude", 0),
+            "longitude": self._station_info.get("longitude", 0),
+            "source": source,
+            "arrivals": line_arrivals,
+            "arrival_count": len(line_arrivals),
+            "error": stop_data.get("error"),
+        }
+
+        if line_arrivals:
+            next_arrival = line_arrivals[0]
+            mins = next_arrival.get("minutes")
+            if isinstance(mins, int):
+                self._attr_native_value = mins
+                self._attr_native_unit_of_measurement = "min"
+            else:
+                self._attr_native_value = mins if mins else 0
+                self._attr_native_unit_of_measurement = "min"
+            self._attr_icon = {
+                "tram": "mdi:tram",
+                "tv": "mdi:tram",
+                "trolley": "mdi:trolley",
+                "bus": "mdi:bus",
+            }.get(next_arrival.get("type", ""), "mdi:bus")
+            self._attr_extra_state_attributes["destination"] = next_arrival.get("destination", "")
+            self._attr_extra_state_attributes["next_arrival_time"] = next_arrival.get("arrival_time", "")
+            self._attr_extra_state_attributes["vehicle_type"] = next_arrival.get("type", "")
+        else:
+            self._attr_native_value = None
+            self._attr_native_unit_of_measurement = None
+            self._attr_icon = "mdi:bus-alert"
+        self.async_write_ha_state()
 
 
 class StptArrivalsSensor(CoordinatorEntity, SensorEntity):

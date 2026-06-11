@@ -244,6 +244,9 @@ class StptTransitCoordinator(DataUpdateCoordinator):
             return {"name": info[0], "latitude": info[1], "longitude": info[2]}
         return {"name": stop_id, "latitude": 0.0, "longitude": 0.0}
 
+    def get_lines_for_stop(self, stop_id: str) -> list[dict]:
+        return self._get_lines_for_stop(stop_id)
+
     def _get_lines_for_stop(self, stop_id: str) -> list[dict]:
         results = []
         for line_id, line_data in self._line_config.items():
