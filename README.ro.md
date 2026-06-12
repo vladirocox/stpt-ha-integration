@@ -4,7 +4,7 @@
 
 Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transport Public Timișoara) în timp real, cu suport complet pentru automatizări.
 
-<!-- TODO: Upload screenshot of the HA dashboard showing STPT sensors -->
+![Senzori STPT în Dashboard](assets/dashboard-sensors.jpg)
 
 ## Funcționalități
 
@@ -17,8 +17,6 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 - **Monitorizare alerte** — senzor binar pentru întreruperi STPT
 - **Interogare configurabilă** — interval de reîmprospătare între 5 și 120 de secunde
 
-<!-- TODO: Upload screenshot of configuration dialog (stop ID input + line picker) -->
-
 ## Instalare
 
 ### Prin HACS (recomandat)
@@ -28,8 +26,6 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 3. Adaugă: `https://github.com/vladirocox/stpt-ha-integration` cu categoria **Integration**
 4. Apasă **Install** pe cardul "STPT Transit"
 5. Repornește Home Assistant
-
-<!-- TODO: Upload screenshot of HACS custom repo setup -->
 
 ### Manual
 
@@ -43,7 +39,7 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 3. Introdu **ID-ul stației** (ex: `326` pentru Catedrala Metropolitană)
 4. Opțional, selectează liniile de monitorizat la acea stație
 
-<!-- TODO: Upload screenshot of Add Integration search dialog showing "STPT Transit" -->
+![Dialog Adăugare Integrare](assets/config-dialog.png)
 
 ### Cum găsești ID-ul unei stații
 
@@ -55,7 +51,7 @@ Alternativ, vizitează `https://live.stpt.ro`, caută stația și notează param
 
 ### Adăugarea stațiilor
 
-<!-- TODO: Upload screenshot of Configure menu with Add/Remove options -->
+![Meniu Configurare cu opțiuni Adăugare/Eliminare](assets/configure-menu.png)
 
 După configurare, mergi la **Settings → Devices & Services → STPT Transit → Configure** pentru a adăuga sau elimina stații.
 
@@ -93,8 +89,6 @@ Fiecare stație creează un senzor per linie monitorizată. Starea senzorului re
 | `error` | str sau null | Mesaj de eroare dacă preluarea a eșuat |
 
 Un senzor **Vehicule** (`sensor.stpt_vehicles`) arată numărul total de vehicule active și defalcarea pe linii.
-
-<!-- TODO: Upload screenshot of sensor attributes panel -->
 
 ## Automatizări
 
@@ -137,9 +131,6 @@ action:
       flash: short
 mode: single
 ```
-
-<!-- TODO: Upload screenshot of automation editor -->
-<!-- TODO: Upload screenshot of Map card showing station pins -->
 
 ## Surse de date
 

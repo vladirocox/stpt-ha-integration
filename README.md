@@ -5,7 +5,7 @@
 
 Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley stations in real time with full automation support.
 
-<!-- TODO: Upload screenshot of the HA dashboard showing STPT sensors in action -->
+![STPT sensors in Dashboard](assets/dashboard-sensors.jpg)
 
 ## Features
 
@@ -17,8 +17,6 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 - **Station coordinates** — lat/lng from the route network available as sensor attributes for map display
 - **Alert monitoring** — binary sensor for active STPT disruptions
 - **Configurable polling** — refresh interval adjustable from 5 to 120 seconds
-
-<!-- TODO: Upload screenshot of the configuration dialog (stop ID input + line picker) -->
 
 ## Installation
 
@@ -42,7 +40,7 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 3. Enter the **stop ID** (e.g. `326` for Catedrala Metropolitană)
 4. Optionally pick which lines to track at that station
 
-<!-- TODO: Upload screenshot of the Add Integration search dialog showing "STPT Transit" -->
+![Add Integration dialog](assets/config-dialog.png)
 
 ### Finding a stop ID
 
@@ -53,6 +51,8 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 Alternatively, visit `https://live.stpt.ro`, search for your station, and note the `stopid=N` parameter in the URL.
 
 ### Adding more stations
+
+![Configure menu with Add/Remove options](assets/configure-menu.png)
 
 After initial setup, go to **Settings → Devices & Services → STPT Transit → Configure** to add or remove stations.
 
@@ -90,8 +90,6 @@ Each station creates a sensor per tracked line. The sensor state is the **minute
 | `error` | str or null | Error message if the fetch failed |
 
 A **Vehicles** sensor (`sensor.stpt_vehicles`) shows total active vehicles and per-line breakdown.
-
-<!-- TODO: Upload screenshot of sensor attributes panel -->
 
 ## Automations
 
@@ -134,9 +132,6 @@ action:
       flash: short
 mode: single
 ```
-
-<!-- TODO: Upload screenshot of automation editor -->
-<!-- TODO: Upload screenshot of Map card showing station pins -->
 
 ## Data Sources
 
