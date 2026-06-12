@@ -1,5 +1,6 @@
 # STPT Transit — Integrare Home Assistant
 
+> **Română** — [Available in English](README.md)
 > Vizualizează și [Dashboard-ul pe cerneală electronică Inky pHAT](https://github.com/vladirocox/inkystpt) — un afișaj e-ink pentru plecări STPT, vreme și redări Chromecast.
 
 Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transport Public Timișoara) în timp real, cu suport complet pentru automatizări.
