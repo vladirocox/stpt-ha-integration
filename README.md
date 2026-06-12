@@ -3,7 +3,7 @@
 > **English** — [Disponibil în limba română](README.ro.md)
 > Also check out the [Inky pHAT Dashboard](https://github.com/vladirocox/inkystpt) — an e-ink display for STPT departures, weather, and Chromecast now-playing.
 
-Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley stations in real time with full automation support.
+Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley/vaporetto stations in real time with full automation support.
 
 ![STPT sensors in Dashboard](assets/dashboard-sensors.jpg)
 
