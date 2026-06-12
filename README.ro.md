@@ -16,7 +16,6 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 - **Coordonate stații** — lat/lng din rețeaua de rute disponibile ca atribute pentru hartă
 - **Monitorizare alerte** — senzor binar pentru întreruperi STPT
 - **Interogare configurabilă** — interval de reîmprospătare între 5 și 120 de secunde
-- **Limbă dublă** — traduceri în engleză și română
 
 <!-- TODO: Upload screenshot of configuration dialog (stop ID input + line picker) -->
 
