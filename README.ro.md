@@ -38,20 +38,18 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 2. Caută **"STPT Transit"**
 3. Introdu **ID-ul stației** (ex: `74` pentru Gara de Nord)
 4. Opțional, selectează liniile de monitorizat la acea stație
-5. După configurare, folosește **Configure** pentru a adăuga sau elimina stații
 
 ### Cum găsești ID-ul unei stații
 
 1. Deschide Google Maps și navighează la stația de autobuz/tramvai
 2. Apasă pe markerul stației — apare un popup cu detalii
 3. Caută **numărul stației** (ID-urile STPT sunt numerice, ex: `74`, `836`, `1122`)
-4. Introdu acel număr în configurarea integrării
 
 Alternativ, vizitează `https://live.stpt.ro`, caută stația și notează parametrul `stopid=N` din URL.
 
-### Adăugarea stațiilor prin CLI (dacă UI nu funcționează)
+### Adăugarea stațiilor (CLI obligatoriu)
 
-Dacă fluxul UI "Configure → Add a station" nu funcționează, folosește scriptul CLI direct:
+Fluxul UI **Configure → Add a station** NU funcționează. Folosește scriptul CLI:
 
 ```bash
 # Adaugă o stație
@@ -67,7 +65,7 @@ docker exec homeassistant python3 /config/custom_components/stpt_transit/tools/m
 docker restart homeassistant
 ```
 
-> **Notă:** După repornire, senzorii noii stații vor apărea automat. Nu e nevoie de creare manuală.
+După repornire, senzorii noii stații vor apărea automat.
 
 ## Senzori
 

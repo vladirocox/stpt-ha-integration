@@ -39,20 +39,18 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 2. Search for **"STPT Transit"**
 3. Enter the **stop ID** (e.g. `74` for Gara de Nord)
 4. Optionally pick which lines to track at that station
-5. After setup, use **Configure** to add more stations or remove existing ones
 
 ### Finding a stop ID
 
 1. Open Google Maps and navigate to the bus/tram stop
 2. Tap the stop marker — a popup shows details
 3. Look for the **stop number** (STPT stop IDs are numeric, e.g. `74`, `836`, `1122`)
-4. Enter that number in the integration setup
 
 Alternatively, visit `https://live.stpt.ro`, search for your station, and note the `stopid=N` parameter in the URL.
 
-### Adding stations via CLI (if UI flow fails)
+### Adding more stations (CLI required)
 
-If the "Configure → Add a station" UI flow doesn't work, use the CLI script directly:
+The **Configure → Add a station** UI flow does **not** work. Use the CLI script instead:
 
 ```bash
 # Add a station
@@ -68,7 +66,7 @@ docker exec homeassistant python3 /config/custom_components/stpt_transit/tools/m
 docker restart homeassistant
 ```
 
-> **Note:** After restarting, the new station's sensors will appear automatically. No manual entity creation needed.
+After restarting, the new station's sensors will appear automatically.
 
 ## Sensors
 
