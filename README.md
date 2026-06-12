@@ -148,6 +148,12 @@ cp -r custom_components/stpt_transit /path/to/ha/custom_components/
 docker restart homeassistant
 ```
 
+## Contributing
+
+Found a bug or have an idea? Contributions are welcome — open an issue or a pull request on [GitHub](https://github.com/vladirocox/stpt-ha-integration).
+
+**Known bug**: when adding a new station via the options flow, each station currently spawns 3 identical alert entities. I'm working on deduplicating them — if you know your way around HA entity registries, help is appreciated.
+
 ## License
 
 MIT
