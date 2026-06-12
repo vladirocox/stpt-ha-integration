@@ -71,68 +71,38 @@ docker restart homeassistant
 
 ## Senzori
 
-Fiecare stație creează un senzor per linie monitorizată. Starea senzorului reprezintă **minutele până la următoarea sosire** (valoare numerică, potrivită pentru automatizări).
+Fiecare linie monitorizată la o stație are propriul senzor. Starea arată **timpul până la următoarea sosire** ca text formatat (ex: `"17min"`, `"2h 43min"`).
 
 | Atribut | Tip | Descriere |
 |---------|-----|-----------|
-| `state` | int sau null | Minute până la următorul vehicul (sau `null` dacă nu sunt date) |
-| `unit_of_measurement` | `min` | Pentru grafice |
 | `stop_id` | str | ID-ul stației STPT |
 | `station_name` | str | Numele stației |
 | `line` | str | Numărul liniei |
-| `latitude` | float | Latitudinea GPS a stației (din rețeaua de rute) |
-| `longitude` | float | Longitudinea GPS a stației (din rețeaua de rute) |
 | `source` | str | `"live"` (din API) sau `"schedule"` (program de rezervă) |
 | `arrivals` | list | Lista sosirilor cu linie, destinație, minute, tip |
 | `arrival_count` | int | Numărul de sosiri viitoare pentru această linie |
 | `destination` | str | Destinația următorului vehicul |
 | `next_arrival_time` | str | Ora programată a sosirii (format HH:MM) |
-| `vehicle_type` | str | `"tram"`, `"trolley"` sau `"bus"` |
+| `minutes_raw` | int | Minutele brute pentru automatizări |
+| `vehicle_type` | str | `"tram"`, `"trolley"`, `"bus"` sau `"vaporetto"` |
+| `latitude` | float | Latitudinea GPS a stației |
+| `longitude` | float | Longitudinea GPS a stației |
 | `error` | str sau null | Mesaj de eroare dacă preluarea a eșuat |
 
-Un senzor **Vehicule** (`sensor.stpt_vehicles`) arată numărul total de vehicule active și defalcarea pe linii.
-
-## Automatizări
-
-Starea senzorului este numerică (minute), deci trigger-ele `numeric_state` funcționează direct:
-
-### Notificare înainte de sosire
+Pentru **automatizări**, folosește atributul `minutes_raw` cu un trigger numeric:
 
 ```yaml
-alias: "Autobuzul sosește în 5 minute"
 trigger:
   - platform: numeric_state
-    entity_id: sensor.catedrala_metropolitana_1
+    entity_id: sensor.pod_calea_sagului_e1
+    attribute: minutes_raw
     below: 5
-condition:
-  - condition: template
-    value_template: "{{ state_attr('sensor.catedrala_metropolitana_1', 'source') == 'live' }}"
-action:
-  - service: notify.mobile_app
-    data:
-      title: "Autobuzul sosește în curând!"
-      message: >
-        Linia {{ state_attr('sensor.catedrala_metropolitana_1', 'destination') }}
-        sosește în {{ states('sensor.catedrala_metropolitana_1') }} minute
-mode: single
 ```
 
-### Aprinde lumina la sosire
-
-```yaml
-alias: "Autobuzul a sosit"
-trigger:
-  - platform: numeric_state
-    entity_id: sensor.catedrala_metropolitana_1
-    below: 1
-action:
-  - service: light.turn_on
-    target:
-      entity_id: light.living_room
-    data:
-      flash: short
-mode: single
-```
+Câțiva senzori globali sunt disponibili:
+- `sensor.stpt_latest_alert` — titlul celei mai recente alerte STPT
+- `sensor.stpt_vehicles` — numărul total de vehicule active cu defalcarea `by_line`
+- `binary_sensor.stpt_disruptions` — pornit/oprit dacă există alerte active
 
 ## Surse de date
 

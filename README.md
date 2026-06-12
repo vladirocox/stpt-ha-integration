@@ -72,68 +72,38 @@ docker restart homeassistant
 
 ## Sensors
 
-Each station creates a sensor per tracked line. The sensor state is the **minutes until the next arrival** (numeric, suitable for automations).
+Each tracked line at a station gets its own sensor. The state shows the **time until next arrival** as a formatted string (e.g. `"17min"`, `"2h 43min"`).
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| `state` | int or null | Minutes until next bus arrives (or `null` if no data) |
-| `unit_of_measurement` | `min` | For graphing |
 | `stop_id` | str | STPT stop ID |
 | `station_name` | str | Human-readable station name |
 | `line` | str | Line number |
-| `latitude` | float | Station GPS latitude (from route network) |
-| `longitude` | float | Station GPS longitude (from route network) |
 | `source` | str | `"live"` (from API) or `"schedule"` (scraped fallback) |
 | `arrivals` | list | Upcoming arrivals with line, destination, minutes, type |
 | `arrival_count` | int | Number of upcoming arrivals for this line |
 | `destination` | str | Destination of the next vehicle |
 | `next_arrival_time` | str | Scheduled arrival time (HH:MM format) |
-| `vehicle_type` | str | `"tram"`, `"trolley"`, or `"bus"` |
+| `minutes_raw` | int | Raw minutes for automations |
+| `vehicle_type` | str | `"tram"`, `"trolley"`, `"bus"`, or `"vaporetto"` |
+| `latitude` | float | Station GPS latitude |
+| `longitude` | float | Station GPS longitude |
 | `error` | str or null | Error message if the fetch failed |
 
-A **Vehicles** sensor (`sensor.stpt_vehicles`) shows total active vehicles and per-line breakdown.
-
-## Automations
-
-The sensor state is numeric (minutes), so `numeric_state` triggers work directly:
-
-### Notify before arrival
+For **automations**, use the `minutes_raw` attribute with a numeric state trigger:
 
 ```yaml
-alias: "Bus arriving in 5 minutes"
 trigger:
   - platform: numeric_state
-    entity_id: sensor.catedrala_metropolitana_1
+    entity_id: sensor.pod_calea_sagului_e1
+    attribute: minutes_raw
     below: 5
-condition:
-  - condition: template
-    value_template: "{{ state_attr('sensor.catedrala_metropolitana_1', 'source') == 'live' }}"
-action:
-  - service: notify.mobile_app
-    data:
-      title: "Bus arriving soon!"
-      message: >
-        Line {{ state_attr('sensor.catedrala_metropolitana_1', 'destination') }}
-        arrives in {{ states('sensor.catedrala_metropolitana_1') }} minutes
-mode: single
 ```
 
-### Flash lights on arrival
-
-```yaml
-alias: "Bus has arrived"
-trigger:
-  - platform: numeric_state
-    entity_id: sensor.catedrala_metropolitana_1
-    below: 1
-action:
-  - service: light.turn_on
-    target:
-      entity_id: light.living_room
-    data:
-      flash: short
-mode: single
-```
+A few global sensors are also available:
+- `sensor.stpt_latest_alert` — title of the most recent STPT alert
+- `sensor.stpt_vehicles` — total active vehicles with `by_line` breakdown
+- `binary_sensor.stpt_disruptions` — on/off if any alerts are active
 
 ## Data Sources
 
