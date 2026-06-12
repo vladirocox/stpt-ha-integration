@@ -50,6 +50,26 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 
 Alternatively, visit `https://live.stpt.ro`, search for your station, and note the `stopid=N` parameter in the URL.
 
+### Adding stations via CLI (if UI flow fails)
+
+If the "Configure → Add a station" UI flow doesn't work, use the CLI script directly:
+
+```bash
+# Add a station
+docker exec homeassistant python3 /config/custom_components/stpt_transit/tools/manage_stations.py add 836 "Serena"
+
+# List all stations
+docker exec homeassistant python3 /config/custom_components/stpt_transit/tools/manage_stations.py list
+
+# Remove a station
+docker exec homeassistant python3 /config/custom_components/stpt_transit/tools/manage_stations.py remove 836
+
+# After any change, restart HA
+docker restart homeassistant
+```
+
+> **Note:** After restarting, the new station's sensors will appear automatically. No manual entity creation needed.
+
 ## Sensors
 
 Each station creates a sensor per tracked line. The sensor state is the **minutes until the next arrival** (numeric, suitable for automations).

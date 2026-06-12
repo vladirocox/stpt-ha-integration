@@ -49,6 +49,26 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 
 Alternativ, vizitează `https://live.stpt.ro`, caută stația și notează parametrul `stopid=N` din URL.
 
+### Adăugarea stațiilor prin CLI (dacă UI nu funcționează)
+
+Dacă fluxul UI "Configure → Add a station" nu funcționează, folosește scriptul CLI direct:
+
+```bash
+# Adaugă o stație
+docker exec homeassistant python3 /config/custom_components/stpt_transit/tools/manage_stations.py add 836 "Serena"
+
+# Lista stațiilor
+docker exec homeassistant python3 /config/custom_components/stpt_transit/tools/manage_stations.py list
+
+# Șterge o stație
+docker exec homeassistant python3 /config/custom_components/stpt_transit/tools/manage_stations.py remove 836
+
+# După orice modificare, repornește HA
+docker restart homeassistant
+```
+
+> **Notă:** După repornire, senzorii noii stații vor apărea automat. Nu e nevoie de creare manuală.
+
 ## Senzori
 
 Fiecare stație creează un senzor per linie monitorizată. Starea senzorului reprezintă **minutele până la următoarea sosire** (valoare numerică, potrivită pentru automatizări).
