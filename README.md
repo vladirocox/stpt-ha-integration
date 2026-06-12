@@ -17,7 +17,6 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 - **Station coordinates** — lat/lng from the route network available as sensor attributes for map display
 - **Alert monitoring** — binary sensor for active STPT disruptions
 - **Configurable polling** — refresh interval adjustable from 5 to 120 seconds
-- **Dual language** — English and Romanian UI translations
 
 <!-- TODO: Upload screenshot of the configuration dialog (stop ID input + line picker) -->
 
