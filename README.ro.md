@@ -151,8 +151,6 @@ docker restart homeassistant
 
 Vrei să contribui? Ai găsit o problemă sau ai o sugestie? Deschide un issue sau un pull request pe [GitHub](https://github.com/vladirocox/stpt-ha-integration).
 
-**Problemă cunoscută**: la adăugarea unei noi stații prin opțiuni, fiecare stație generează 3 entități de alertă identice. Lucrez la eliminarea duplicatelor — dacă te pricepi la registry-ul de entități HA, ajutorul e binevenit.
-
 ## Licență
 
 MIT
