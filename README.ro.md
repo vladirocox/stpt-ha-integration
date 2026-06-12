@@ -8,7 +8,7 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 
 ## Funcționalități
 
-- **Sosiri în timp real** — interoghează `live.stpt.ro` la un interval configurabil (implicit 10s, interval 5-120s)
+- **Sosiri în timp real** — interoghează `live.stpt.ro` la un interval configurabil (implicit 60s, interval 5-120s)
 - **Program de rezervă** — când API-ul live nu returnează date, folosește programul preluat de pe `smtt.ro` (cache 1h)
 - **Stații multiple** — monitorizează oricâte; adaugă/elimină oricând din UI
 - **Senzori pe linie** — fiecare linie are propriul senzor cu minutele până la următoarea sosire

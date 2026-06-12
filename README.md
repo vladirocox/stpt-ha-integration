@@ -9,7 +9,7 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 
 ## Features
 
-- **Real-time arrivals** — polls `live.stpt.ro` at a configurable interval (default 10s, range 5-120s)
+- **Real-time arrivals** — polls `live.stpt.ro` at a configurable interval (default 60s, range 5-120s)
 - **Schedule fallback** — when live API returns no data, falls back to scraped schedule from `smtt.ro` (1h cache)
 - **Multiple stations** — track any number; add/remove anytime via UI
 - **Per-line sensors** — each line at a station gets its own sensor showing minutes until next arrival

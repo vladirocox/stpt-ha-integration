@@ -9,5 +9,5 @@
   "iot_class": "cloud_polling",
   "dependencies": ["http", "panel_custom"],
   "requirements": [],
-  "version": "1.4.3"
+  "version": "1.5.0"
 }
