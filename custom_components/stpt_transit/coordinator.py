@@ -259,6 +259,9 @@ class StptTransitCoordinator(DataUpdateCoordinator):
         now_ts = time.time()
         cached = self._schedule_cache.get(stop_id)
         if cached and (now_ts - cached["ts"]) < SCHEDULE_TTL:
+            for entry in cached["times"]:
+                if not entry.get("live"):
+                    entry["minutes"] = _compute_minutes_from_now(entry["time"])
             return cached["times"]
 
         line_info = self._get_lines_for_stop(stop_id)

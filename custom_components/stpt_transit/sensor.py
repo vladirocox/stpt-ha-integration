@@ -20,6 +20,14 @@ _LOGGER = logging.getLogger(__name__)
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
 
+def _format_minutes(mins: int | None) -> str | None:
+    if mins is None:
+        return None
+    if mins >= 60:
+        return f"{mins // 60}h {mins % 60}min"
+    return f"{mins}min"
+
+
 GLOBAL_SENSOR_IDS = {"stpt_latest_alert", "stpt_vehicles"}
 
 
@@ -189,6 +197,7 @@ class StptLineSensor(CoordinatorEntity, SensorEntity):
             self._attr_extra_state_attributes["destination"] = next_arrival.get("destination", "")
             self._attr_extra_state_attributes["next_arrival_time"] = next_arrival.get("arrival_time", "")
             self._attr_extra_state_attributes["vehicle_type"] = next_arrival.get("type", "")
+            self._attr_extra_state_attributes["time_formatted"] = _format_minutes(mins)
         else:
             self._attr_native_value = None
             self._attr_native_unit_of_measurement = None
@@ -274,6 +283,7 @@ class StptArrivalsSensor(CoordinatorEntity, SensorEntity):
             self._attr_extra_state_attributes["next_destination"] = next_bus.get("destination", "")
             self._attr_extra_state_attributes["next_arrival_time"] = next_bus.get("arrival_time", "")
             self._attr_extra_state_attributes["next_type"] = next_bus.get("type", "")
+            self._attr_extra_state_attributes["time_formatted"] = _format_minutes(mins)
         else:
             self._attr_native_value = None
             self._attr_native_unit_of_measurement = None
