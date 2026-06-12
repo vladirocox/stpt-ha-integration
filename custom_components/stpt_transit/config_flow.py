@@ -9,7 +9,7 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigEntry, OptionsFlow
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, SelectSelector, SelectSelectorConfig
+from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, SelectSelector, SelectSelectorConfig, SelectOptionDict
 
 from .const import (
     DOMAIN,
@@ -24,6 +24,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 _LINE_CONFIG: dict | None = None
+_STATIONS_MAP: dict | None = None
 
 
 def _load_line_config() -> dict:
@@ -38,6 +39,29 @@ def _load_line_config() -> dict:
         _LOGGER.warning("Could not load lines_config.json: %s", err)
         _LINE_CONFIG = {}
     return _LINE_CONFIG
+
+
+def _load_stations_map() -> dict:
+    global _STATIONS_MAP
+    if _STATIONS_MAP is not None:
+        return _STATIONS_MAP
+    path = os.path.join(os.path.dirname(__file__), "stations_map.json")
+    try:
+        with open(path) as f:
+            _STATIONS_MAP = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        _STATIONS_MAP = {}
+    return _STATIONS_MAP
+
+
+def _resolve_station_name(stop_id: str, custom_name: str = "") -> str:
+    if custom_name:
+        return custom_name
+    stations = _load_stations_map()
+    info = stations.get(stop_id)
+    if info and isinstance(info, list) and len(info) > 0:
+        return info[0]
+    return stop_id
 
 
 def _get_lines_for_stop(stop_id: str) -> list[str]:
@@ -63,9 +87,10 @@ class StptTransitConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input is not None:
+            custom = user_input.get(CONF_NAME, "") or ""
             self._selected_station = {
                 CONF_STOP_ID: user_input[CONF_STOP_ID],
-                CONF_NAME: user_input.get(CONF_NAME, "") or "",
+                CONF_NAME: await self.hass.async_add_executor_job(_resolve_station_name, user_input[CONF_STOP_ID], custom),
             }
             return await self.async_step_pick_lines()
 
@@ -102,7 +127,7 @@ class StptTransitConfigFlow(ConfigFlow, domain=DOMAIN):
                 data={CONF_STATIONS: [station]},
             )
 
-        options = {line: f"Line {line}" for line in available}
+        options = [SelectOptionDict(value=line, label=f"Line {line}") for line in available]
         return self.async_show_form(
             step_id="pick_lines",
             data_schema=vol.Schema({
@@ -160,9 +185,10 @@ class StptTransitOptionsFlow(OptionsFlow):
 
     async def async_step_add(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input is not None:
+            custom = user_input.get(CONF_NAME, "") or ""
             self._add_selected = {
                 CONF_STOP_ID: user_input[CONF_STOP_ID],
-                CONF_NAME: user_input.get(CONF_NAME, "") or "",
+                CONF_NAME: await self.hass.async_add_executor_job(_resolve_station_name, user_input[CONF_STOP_ID], custom),
             }
             return await self.async_step_add_lines()
 
@@ -196,7 +222,7 @@ class StptTransitOptionsFlow(OptionsFlow):
             self._add_selected = None
             return self.async_create_entry(title="", data=self._options_data({CONF_STATIONS: stations}))
 
-        options = {line: f"Line {line}" for line in available}
+        options = [SelectOptionDict(value=line, label=f"Line {line}") for line in available]
         return self.async_show_form(
             step_id="add_lines",
             data_schema=vol.Schema({
