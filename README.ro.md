@@ -45,6 +45,8 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 
 ### Cum găsești ID-ul unei stații
 
+![Cum găsești ID-ul stației în Google Maps](assets/find-stop-id-google-maps.png)
+
 1. Deschide Google Maps și navighează la stația de autobuz/tramvai
 2. Apasă pe markerul stației — apare un popup cu detalii
 3. Caută **numărul stației** (ID-urile STPT sunt numerice, ex: `326`, `74`, `1122`)
