@@ -68,9 +68,12 @@ async def async_setup_entry(
     async_add_entities(entities, update_before_add=True)
 
 
+GLOBAL_BINARY_SENSOR_IDS = {"stpt_disruptions"}
+
+
 def _cleanup_old_entities(hass: HomeAssistant, entry: StptTransitConfigEntry) -> None:
     ent_reg = er.async_get(hass)
-    expected = set(GLOBAL_SENSOR_IDS)
+    expected = set(GLOBAL_SENSOR_IDS) | GLOBAL_BINARY_SENSOR_IDS
     for station in get_stations(entry):
         stop_id = station[CONF_STOP_ID]
         expected.add(f"{entry.entry_id}_{stop_id}")
