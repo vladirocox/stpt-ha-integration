@@ -13,7 +13,7 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 - **Per-line sensors** — each line at a station gets its own sensor showing minutes until next arrival
 - **Vehicle tracking** — total active vehicles with per-line breakdown
 - **Map support** — each sensor exposes `latitude` / `longitude` attributes for the built-in HA Map card
-- **900+ stations** — full route network coordinates bundled
+- **Wide coverage** — full route network coordinates bundled
 - **Alert monitoring** — binary sensor for active STPT alerts
 - **Configurable polling** — refresh interval adjustable from 5 to 120 seconds
 - **Dual language** — English and Romanian UI translations
@@ -60,7 +60,7 @@ After initial setup, go to **Settings → Devices & Services → STPT Transit �
 Alternatively, use the CLI script:
 
 ```bash
-docker exec homeassistant python3 /config/custom_components/stpt_transit/tools/manage_stations.py add 836 "Serena"
+docker exec homeassistant python3 /config/custom_components/stpt_transit/tools/manage_stations.py add 1122 "Shopping City"
 docker restart homeassistant
 ```
 

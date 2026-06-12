@@ -12,7 +12,7 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 - **Senzori pe linie** — fiecare linie dintr-o stație are propriul senzor cu minutele până la următoarea sosire
 - **Urmărire vehicule** — numărul total de vehicule active defalcat pe linii
 - **Suport hartă** — fiecare senzor expune atributele `latitude` / `longitude` pentru cardul Hartă din HA
-- **900+ stații** — rețeaua completă de rute inclusă
+- **Acoperire largă** — rețeaua completă de rute inclusă
 - **Monitorizare alerte** — senzor binar pentru alertele STPT active
 - **Interogare configurabilă** — intervalul de reîmprospătare ajustabil între 5 și 120 de secunde
 - **Limbă dublă** — traduceri în engleză și română
@@ -59,7 +59,7 @@ După configurare, mergi la **Settings → Devices & Services → STPT Transit �
 Alternativ, folosește scriptul CLI:
 
 ```bash
-docker exec homeassistant python3 /config/custom_components/stpt_transit/tools/manage_stations.py add 836 "Serena"
+docker exec homeassistant python3 /config/custom_components/stpt_transit/tools/manage_stations.py add 1122 "Shopping City"
 docker restart homeassistant
 ```
 
