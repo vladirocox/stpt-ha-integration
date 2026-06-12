@@ -41,6 +41,8 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 
 ![Dialog Adăugare Integrare](assets/config-dialog.png)
 
+![Meniu Configurare cu opțiuni Adăugare/Eliminare](assets/configure-menu.png)
+
 ### Cum găsești ID-ul unei stații
 
 1. Deschide Google Maps și navighează la stația de autobuz/tramvai
@@ -50,8 +52,6 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 Alternativ, vizitează `https://live.stpt.ro`, caută stația și notează parametrul `stopid=N` din URL.
 
 ### Adăugarea stațiilor
-
-![Meniu Configurare cu opțiuni Adăugare/Eliminare](assets/configure-menu.png)
 
 După configurare, mergi la **Settings → Devices & Services → STPT Transit → Configure** pentru a adăuga sau elimina stații.
 

@@ -42,6 +42,8 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 
 ![Add Integration dialog](assets/config-dialog.png)
 
+![Configure menu with Add/Remove options](assets/configure-menu.png)
+
 ### Finding a stop ID
 
 1. Open Google Maps and navigate to the bus/tram stop
@@ -51,8 +53,6 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 Alternatively, visit `https://live.stpt.ro`, search for your station, and note the `stopid=N` parameter in the URL.
 
 ### Adding more stations
-
-![Configure menu with Add/Remove options](assets/configure-menu.png)
 
 After initial setup, go to **Settings → Devices & Services → STPT Transit → Configure** to add or remove stations.
 
