@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -330,45 +331,54 @@ class StptTransitCoordinator(DataUpdateCoordinator):
         except (aiohttp.ClientError, TimeoutError, json.JSONDecodeError):
             return {"total": 0, "vehicles": [], "by_line": {}}
 
-    async def _async_update_data(self) -> dict[str, Any]:
-        _interval = self.config_entry.options.get(CONF_REFRESH_INTERVAL, DEFAULT_REFRESH_INTERVAL)
-        desired = timedelta(seconds=_interval)
-        if self.update_interval != desired:
-            self.update_interval = desired
+    async def _fetch_station_arrivals(self, stop_id: str) -> dict:
+        arrivals = []
+        error = None
+        source = "live"
 
-        stations = self._get_stations()
-        result = {}
-        for station in stations:
-            stop_id = station["stop_id"]
-            arrivals = []
-            error = None
-            source = "live"
-
-            try:
-                url = f"{LIVE_API_URL}?stopid={stop_id}"
-                async with self._session.get(url, headers=REQUEST_HEADERS, timeout=10) as resp:
-                    if resp.status != 200:
-                        error = f"HTTP {resp.status}"
+        try:
+            url = f"{LIVE_API_URL}?stopid={stop_id}"
+            async with self._session.get(url, headers=REQUEST_HEADERS, timeout=10) as resp:
+                if resp.status != 200:
+                    error = f"HTTP {resp.status}"
+                else:
+                    raw = await resp.json()
+                    living = _parse_arrivals(raw)
+                    if living:
+                        arrivals = living
                     else:
-                        raw = await resp.json()
-                        living = _parse_arrivals(raw)
-                        if living:
-                            arrivals = living
-                        else:
-                            source = "schedule"
-            except (aiohttp.ClientError, TimeoutError, json.JSONDecodeError) as err:
-                error = str(err)
-                source = "schedule"
+                        source = "schedule"
+        except (aiohttp.ClientError, TimeoutError, json.JSONDecodeError) as err:
+            error = str(err)
+            source = "schedule"
 
-            if source == "schedule" and error is None:
-                try:
-                    schedule = await self._fetch_schedule(stop_id)
-                    arrivals = schedule
-                except Exception as err:
-                    error = str(err) if not error else error
+        if source == "schedule" and error is None:
+            try:
+                schedule = await self._fetch_schedule(stop_id)
+                arrivals = schedule
+            except Exception as err:
+                error = str(err) if not error else error
 
-            result[stop_id] = {"arrivals": arrivals, "error": error, "source": source}
+        return {"stop_id": stop_id, "arrivals": arrivals, "error": error, "source": source}
 
-        result["alerts"] = await self._fetch_alerts()
-        result["vehicles"] = await self._fetch_vehicles()
+    async def _async_update_data(self) -> dict[str, Any]:
+        stations = self._get_stations()
+        if not stations:
+            return {"alerts": [], "vehicles": {"total": 0, "vehicles": [], "by_line": []}}
+
+        station_tasks = [
+            self._fetch_station_arrivals(station["stop_id"])
+            for station in stations
+        ]
+        results = await asyncio.gather(*station_tasks)
+
+        result = {}
+        for r in results:
+            stop_id = r.pop("stop_id")
+            result[stop_id] = r
+
+        alerts_task = asyncio.create_task(self._fetch_alerts())
+        vehicles_task = asyncio.create_task(self._fetch_vehicles())
+        result["alerts"] = await alerts_task
+        result["vehicles"] = await vehicles_task
         return result
