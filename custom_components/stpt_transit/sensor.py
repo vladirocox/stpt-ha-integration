@@ -11,7 +11,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers import entity_registry as er
 
-from .const import DOMAIN, ATTRIBUTION, CONF_LINES
+from .const import DOMAIN, ATTRIBUTION, CONF_LINES, CONF_STOP_ID
 from .coordinator import StptTransitConfigEntry, StptTransitCoordinator
 from . import get_stations
 
@@ -61,14 +61,21 @@ async def async_setup_entry(
 
 def _cleanup_old_entities(hass: HomeAssistant, entry: StptTransitConfigEntry) -> None:
     ent_reg = er.async_get(hass)
-    known_new = {f"{entry.entry_id}_latest_alert", f"{entry.entry_id}_alerts"}
+    expected = {
+        f"{entry.entry_id}_latest_alert",
+        f"{entry.entry_id}_vehicles",
+        f"{entry.entry_id}_alerts",
+    }
+    for station in get_stations(entry):
+        stop_id = station[CONF_STOP_ID]
+        expected.add(f"{entry.entry_id}_{stop_id}")
+        for sline in station.get(CONF_LINES, []):
+            expected.add(f"{entry.entry_id}_{stop_id}_{str(sline).strip()}")
+
     for entity_entry in list(er.async_entries_for_config_entry(ent_reg, entry.entry_id)):
-        uid = entity_entry.unique_id
-        if uid.startswith(f"{entry.entry_id}_") and uid not in known_new:
-            remainder = uid[len(entry.entry_id) + 1:]
-            if remainder.isdigit():
-                _LOGGER.debug("Removing orphaned entity %s (unique_id: %s)", entity_entry.entity_id, uid)
-                ent_reg.async_remove(entity_entry.entity_id)
+        if entity_entry.unique_id not in expected:
+            _LOGGER.debug("Removing orphaned entity %s (unique_id: %s)", entity_entry.entity_id, entity_entry.unique_id)
+            ent_reg.async_remove(entity_entry.entity_id)
 
 
 def _discover_lines(

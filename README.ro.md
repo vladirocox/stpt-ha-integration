@@ -4,18 +4,21 @@
 
 Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transport Public Timișoara) în timp real, cu suport complet pentru automatizări.
 
+<!-- TODO: Upload screenshot of the HA dashboard showing STPT sensors -->
+
 ## Funcționalități
 
 - **Sosiri în timp real** — interoghează `live.stpt.ro` la un interval configurabil (implicit 10s, interval 5-120s)
-- **Program de rezervă** — când API-ul live nu returnează date (noaptea, sărbători), folosește programul preluat de pe `smtt.ro` (cache 1h)
-- **Stații multiple** — monitorizează oricâte stații; adaugă/elimină oricând din UI
-- **Senzori pe linie** — fiecare linie dintr-o stație are propriul senzor cu minutele până la următoarea sosire
+- **Program de rezervă** — când API-ul live nu returnează date, folosește programul preluat de pe `smtt.ro` (cache 1h)
+- **Stații multiple** — monitorizează oricâte; adaugă/elimină oricând din UI
+- **Senzori pe linie** — fiecare linie are propriul senzor cu minutele până la următoarea sosire
 - **Urmărire vehicule** — numărul total de vehicule active defalcat pe linii
-- **Suport hartă** — fiecare senzor expune atributele `latitude` / `longitude` pentru cardul Hartă din HA
-- **Acoperire largă** — rețeaua completă de rute inclusă
-- **Monitorizare alerte** — senzor binar pentru alertele STPT active
-- **Interogare configurabilă** — intervalul de reîmprospătare ajustabil între 5 și 120 de secunde
+- **Coordonate stații** — lat/lng din rețeaua de rute disponibile ca atribute pentru hartă
+- **Monitorizare alerte** — senzor binar pentru întreruperi STPT
+- **Interogare configurabilă** — interval de reîmprospătare între 5 și 120 de secunde
 - **Limbă dublă** — traduceri în engleză și română
+
+<!-- TODO: Upload screenshot of configuration dialog (stop ID input + line picker) -->
 
 ## Instalare
 
@@ -27,6 +30,8 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 4. Apasă **Install** pe cardul "STPT Transit"
 5. Repornește Home Assistant
 
+<!-- TODO: Upload screenshot of HACS custom repo setup -->
+
 ### Manual
 
 1. Copiază `custom_components/stpt_transit/` în directorul `custom_components/` al HA-ului tău
@@ -36,18 +41,22 @@ Monitorizează stațiile de autobuz/tramvai/troleibuz STPT (Societatea de Transp
 
 1. Mergi la **Settings → Devices & Services → Add Integration**
 2. Caută **"STPT Transit"**
-3. Introdu **ID-ul stației** (ex: `74` pentru Gara de Nord)
+3. Introdu **ID-ul stației** (ex: `326` pentru Catedrala Metropolitană)
 4. Opțional, selectează liniile de monitorizat la acea stație
+
+<!-- TODO: Upload screenshot of Add Integration search dialog showing "STPT Transit" -->
 
 ### Cum găsești ID-ul unei stații
 
 1. Deschide Google Maps și navighează la stația de autobuz/tramvai
 2. Apasă pe markerul stației — apare un popup cu detalii
-3. Caută **numărul stației** (ID-urile STPT sunt numerice, ex: `74`, `836`, `1122`)
+3. Caută **numărul stației** (ID-urile STPT sunt numerice, ex: `326`, `74`, `1122`)
 
 Alternativ, vizitează `https://live.stpt.ro`, caută stația și notează parametrul `stopid=N` din URL.
 
 ### Adăugarea stațiilor
+
+<!-- TODO: Upload screenshot of Configure menu with Add/Remove options -->
 
 După configurare, mergi la **Settings → Devices & Services → STPT Transit → Configure** pentru a adăuga sau elimina stații.
 
@@ -59,7 +68,7 @@ După configurare, mergi la **Settings → Devices & Services → STPT Transit �
 Alternativ, folosește scriptul CLI:
 
 ```bash
-docker exec homeassistant python3 /config/custom_components/stpt_transit/tools/manage_stations.py add 1122 "Shopping City"
+docker exec homeassistant python3 /config/custom_components/stpt_transit/tools/manage_stations.py add 326 "Catedrala Metropolitană"
 docker restart homeassistant
 ```
 
@@ -74,10 +83,10 @@ Fiecare stație creează un senzor per linie monitorizată. Starea senzorului re
 | `stop_id` | str | ID-ul stației STPT |
 | `station_name` | str | Numele stației |
 | `line` | str | Numărul liniei |
-| `latitude` | float | Pentru cardul Hartă |
-| `longitude` | float | Pentru cardul Hartă |
+| `latitude` | float | Latitudinea GPS a stației (din rețeaua de rute) |
+| `longitude` | float | Longitudinea GPS a stației (din rețeaua de rute) |
 | `source` | str | `"live"` (din API) sau `"schedule"` (program de rezervă) |
-| `arrivals` | list | Lista completă a sosirilor cu linie, destinație, minute, tip |
+| `arrivals` | list | Lista sosirilor cu linie, destinație, minute, tip |
 | `arrival_count` | int | Numărul de sosiri viitoare pentru această linie |
 | `destination` | str | Destinația următorului vehicul |
 | `next_arrival_time` | str | Ora programată a sosirii (format HH:MM) |
@@ -86,39 +95,41 @@ Fiecare stație creează un senzor per linie monitorizată. Starea senzorului re
 
 Un senzor **Vehicule** (`sensor.stpt_vehicles`) arată numărul total de vehicule active și defalcarea pe linii.
 
+<!-- TODO: Upload screenshot of sensor attributes panel -->
+
 ## Automatizări
 
-Deoarece starea senzorului este o **valoare numerică** (minute), poți folosi trigger-e standard `numeric_state`:
+Starea senzorului este numerică (minute), deci trigger-ele `numeric_state` funcționează direct:
 
-### Notifică cu 5 minute înainte de sosire
+### Notificare înainte de sosire
 
 ```yaml
 alias: "Autobuzul sosește în 5 minute"
 trigger:
   - platform: numeric_state
-    entity_id: sensor.gara_de_nord
+    entity_id: sensor.catedrala_metropolitana_1
     below: 5
 condition:
   - condition: template
-    value_template: "{{ state_attr('sensor.gara_de_nord', 'source') == 'live' }}"
+    value_template: "{{ state_attr('sensor.catedrala_metropolitana_1', 'source') == 'live' }}"
 action:
   - service: notify.mobile_app
     data:
       title: "Autobuzul sosește în curând!"
       message: >
-        Linia {{ state_attr('sensor.gara_de_nord', 'next_line') }}
-        către {{ state_attr('sensor.gara_de_nord', 'next_destination') }}
-        sosește în {{ states('sensor.gara_de_nord') }} minute
+        Linia {{ state_attr('sensor.catedrala_metropolitana_1', 'destination') }}
+        sosește în {{ states('sensor.catedrala_metropolitana_1') }} minute
 mode: single
 ```
 
-### Aprinde lumina când sosește autobuzul
+### Aprinde lumina la sosire
 
 ```yaml
 alias: "Autobuzul a sosit"
 trigger:
-  - platform: state
-    entity_id: sensor.gara_de_nord
+  - platform: numeric_state
+    entity_id: sensor.catedrala_metropolitana_1
+    below: 1
 action:
   - service: light.turn_on
     target:
@@ -128,69 +139,8 @@ action:
 mode: single
 ```
 
-### Anunț TTS când se apropie o linie specifică
-
-```yaml
-alias: "M35 se apropie"
-trigger:
-  - platform: numeric_state
-    entity_id: sensor.gara_de_nord
-    below: 3
-condition:
-  - condition: template
-    value_template: >
-      {{ state_attr('sensor.gara_de_nord', 'next_line') == 'M35' }}
-action:
-  - service: tts.cloud_say
-    data:
-      entity_id: media_player.living_room_speaker
-      message: "Autobuzul M35 către {{ state_attr('sensor.gara_de_nord', 'next_destination') }} sosește acum"
-mode: single
-```
-
-### Detectează plecarea unui autobuz
-
-```yaml
-alias: "Autobuzul a plecat - actualizează dashboard"
-trigger:
-  - platform: state
-    entity_id: sensor.gara_de_nord
-    attribute: arrivals
-action:
-  - service: script.refresh_dashboard
-mode: queued
-```
-
-## Card Hartă
-
-```yaml
-type: map
-entities:
-  - entity: sensor.gara_de_nord
-  - entity: sensor.catedrala_mitropolitana
-  - entity: sensor.shopping_city
-```
-
-## Card Lovelace (Markdown)
-
-```yaml
-type: markdown
-content: >
-  {% set s = states.sensor.gara_de_nord %}
-
-  **🚏 {{ s.attributes.station_name }}** ({{ s.attributes.stop_id }})
-
-  {% if s.state != 'unknown' and s.state != 'none' %}
-  Următorul: **Linia {{ s.attributes.line }}** → {{ s.attributes.destination }}
-  Sosește în **{{ s.state }} min** la {{ s.attributes.next_arrival_time }}
-  {% else %}
-  _Nu sunt date live_
-  {% endif %}
-
-  {% for a in s.attributes.arrivals %}
-  - {{ a.line }} → {{ a.destination }}: {{ a.minutes }} min{% if not a.live %} (program){% endif %}
-  {% endfor %}
-```
+<!-- TODO: Upload screenshot of automation editor -->
+<!-- TODO: Upload screenshot of Map card showing station pins -->
 
 ## Surse de date
 
