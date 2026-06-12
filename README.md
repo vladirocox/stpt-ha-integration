@@ -30,8 +30,6 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 4. Click **Install** on the "STPT Transit" card
 5. Restart Home Assistant
 
-<!-- TODO: Upload screenshot of HACS custom repo setup -->
-
 ### Manual
 
 1. Copy `custom_components/stpt_transit/` to your HA `custom_components/` directory
@@ -55,8 +53,6 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 Alternatively, visit `https://live.stpt.ro`, search for your station, and note the `stopid=N` parameter in the URL.
 
 ### Adding more stations
-
-<!-- TODO: Upload screenshot of the Configure menu with Add/Remove options -->
 
 After initial setup, go to **Settings → Devices & Services → STPT Transit → Configure** to add or remove stations.
 
