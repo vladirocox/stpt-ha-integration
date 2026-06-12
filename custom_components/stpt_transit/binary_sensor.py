@@ -28,7 +28,7 @@ class StptAlertsBinarySensor(CoordinatorEntity, BinarySensorEntity):
 
     def __init__(self, coordinator: StptTransitCoordinator) -> None:
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_alerts"
+        self._attr_unique_id = "stpt_disruptions"
         self._attr_name = "STPT Disruptions"
         self._attr_icon = "mdi:alert-circle"
         self._attr_attribution = ATTRIBUTION

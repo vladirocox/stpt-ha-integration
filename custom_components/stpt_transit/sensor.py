@@ -20,6 +20,9 @@ _LOGGER = logging.getLogger(__name__)
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
 
+GLOBAL_SENSOR_IDS = {"stpt_latest_alert", "stpt_vehicles"}
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: StptTransitConfigEntry,
@@ -54,18 +57,20 @@ async def async_setup_entry(
             )
             entities.append(StptArrivalsSensor(coordinator, stop_id, name, station_info))
 
-    entities.append(StptLatestAlertSensor(coordinator))
-    entities.append(StptVehiclesSensor(coordinator))
+    ent_reg = er.async_get(hass)
+    for uid in GLOBAL_SENSOR_IDS:
+        if ent_reg.async_get_entity_id(Platform.SENSOR, DOMAIN, uid) is None:
+            if uid == "stpt_latest_alert":
+                entities.append(StptLatestAlertSensor(coordinator))
+            elif uid == "stpt_vehicles":
+                entities.append(StptVehiclesSensor(coordinator))
+
     async_add_entities(entities, update_before_add=True)
 
 
 def _cleanup_old_entities(hass: HomeAssistant, entry: StptTransitConfigEntry) -> None:
     ent_reg = er.async_get(hass)
-    expected = {
-        f"{entry.entry_id}_latest_alert",
-        f"{entry.entry_id}_vehicles",
-        f"{entry.entry_id}_alerts",
-    }
+    expected = set(GLOBAL_SENSOR_IDS)
     for station in get_stations(entry):
         stop_id = station[CONF_STOP_ID]
         expected.add(f"{entry.entry_id}_{stop_id}")
@@ -278,7 +283,7 @@ class StptLatestAlertSensor(CoordinatorEntity, SensorEntity):
 
     def __init__(self, coordinator: StptTransitCoordinator) -> None:
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_latest_alert"
+        self._attr_unique_id = "stpt_latest_alert"
         self._attr_name = "STPT Latest Alert"
         self._attr_icon = "mdi:alert"
         self._attr_attribution = ATTRIBUTION
@@ -312,7 +317,7 @@ class StptVehiclesSensor(CoordinatorEntity, SensorEntity):
 
     def __init__(self, coordinator: StptTransitCoordinator) -> None:
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_vehicles"
+        self._attr_unique_id = "stpt_vehicles"
         self._attr_name = "STPT Vehicles"
         self._attr_icon = "mdi:bus-multiple"
         self._attr_attribution = ATTRIBUTION
