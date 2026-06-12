@@ -21,7 +21,6 @@ from .const import (
     LIVE_API_URL,
     ALERTS_API_URL,
     VEHICLES_API_URL,
-    UPDATE_INTERVAL,
     CONF_STATIONS,
     CONF_REFRESH_INTERVAL,
     DEFAULT_REFRESH_INTERVAL,
@@ -370,15 +369,8 @@ class StptTransitCoordinator(DataUpdateCoordinator):
             self._fetch_station_arrivals(station["stop_id"])
             for station in stations
         ]
+        station_tasks.append(self._fetch_alerts())
+        station_tasks.append(self._fetch_vehicles())
+        tag_keys = [s["stop_id"] for s in stations] + ["alerts", "vehicles"]
         results = await asyncio.gather(*station_tasks)
-
-        result = {}
-        for r in results:
-            stop_id = r.pop("stop_id")
-            result[stop_id] = r
-
-        alerts_task = asyncio.create_task(self._fetch_alerts())
-        vehicles_task = asyncio.create_task(self._fetch_vehicles())
-        result["alerts"] = await alerts_task
-        result["vehicles"] = await vehicles_task
-        return result
+        return dict(zip(tag_keys, results))
