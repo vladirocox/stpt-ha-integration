@@ -46,13 +46,13 @@ Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley statio
 
 ### Finding a stop ID
 
-![Finding a stop ID in Google Maps](assets/find-stop-id-google-maps.png)
-
 1. Open Google Maps and navigate to the bus/tram stop
 2. Tap the stop marker — a popup shows details
 3. Look for the **stop number** (STPT stop IDs are numeric, e.g. `326`, `74`, `1122`)
 
 Alternatively, visit `https://live.stpt.ro`, search for your station, and note the `stopid=N` parameter in the URL.
+
+![Finding a stop ID in Google Maps](assets/find-stop-id-google-maps.png)
 
 ### Adding more stations
 
