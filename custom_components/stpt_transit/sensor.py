@@ -182,22 +182,19 @@ class StptLineSensor(CoordinatorEntity, SensorEntity):
         if line_arrivals:
             next_arrival = line_arrivals[0]
             mins = next_arrival.get("minutes")
-            if isinstance(mins, int):
-                self._attr_native_value = mins
-                self._attr_native_unit_of_measurement = "min"
-            else:
-                self._attr_native_value = mins if mins else 0
-                self._attr_native_unit_of_measurement = "min"
+            self._attr_native_value = _format_minutes(mins) if isinstance(mins, int) else (str(mins) if mins else None)
+            self._attr_native_unit_of_measurement = None
             self._attr_icon = {
                 "tram": "mdi:tram",
                 "tv": "mdi:tram",
                 "trolley": "mdi:trolley",
                 "bus": "mdi:bus",
+                "vaporetto": "mdi:ferry",
             }.get(next_arrival.get("type", ""), "mdi:bus")
             self._attr_extra_state_attributes["destination"] = next_arrival.get("destination", "")
             self._attr_extra_state_attributes["next_arrival_time"] = next_arrival.get("arrival_time", "")
             self._attr_extra_state_attributes["vehicle_type"] = next_arrival.get("type", "")
-            self._attr_extra_state_attributes["time_formatted"] = _format_minutes(mins)
+            self._attr_extra_state_attributes["minutes_raw"] = mins if isinstance(mins, int) else None
         else:
             self._attr_native_value = None
             self._attr_native_unit_of_measurement = None
@@ -267,23 +264,20 @@ class StptArrivalsSensor(CoordinatorEntity, SensorEntity):
         if arrivals:
             next_bus = arrivals[0]
             mins = next_bus.get("minutes")
-            if isinstance(mins, int):
-                self._attr_native_value = mins
-                self._attr_native_unit_of_measurement = "min"
-            else:
-                self._attr_native_value = mins if mins else 0
-                self._attr_native_unit_of_measurement = "min"
+            self._attr_native_value = _format_minutes(mins) if isinstance(mins, int) else (str(mins) if mins else None)
+            self._attr_native_unit_of_measurement = None
             self._attr_icon = {
                 "tram": "mdi:tram",
                 "tv": "mdi:tram",
                 "trolley": "mdi:trolley",
                 "bus": "mdi:bus",
+                "vaporetto": "mdi:ferry",
             }.get(next_bus.get("type", ""), "mdi:bus")
             self._attr_extra_state_attributes["next_line"] = next_bus.get("line", "")
             self._attr_extra_state_attributes["next_destination"] = next_bus.get("destination", "")
             self._attr_extra_state_attributes["next_arrival_time"] = next_bus.get("arrival_time", "")
             self._attr_extra_state_attributes["next_type"] = next_bus.get("type", "")
-            self._attr_extra_state_attributes["time_formatted"] = _format_minutes(mins)
+            self._attr_extra_state_attributes["minutes_raw"] = mins if isinstance(mins, int) else None
         else:
             self._attr_native_value = None
             self._attr_native_unit_of_measurement = None
