@@ -15,6 +15,8 @@ PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
 _LOGGER = logging.getLogger(__name__)
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
+_PANEL_REGISTERED = False
+
 
 def get_stations(entry) -> list[dict]:
     opts = entry.options.get(CONF_STATIONS)
@@ -24,12 +26,17 @@ def get_stations(entry) -> list[dict]:
 
 
 async def _async_register_panel(hass: HomeAssistant) -> None:
+    global _PANEL_REGISTERED
+    if _PANEL_REGISTERED:
+        return
+
     from homeassistant.components import panel_custom
     from homeassistant.components.frontend import async_panel_exists
     from homeassistant.components.http import StaticPathConfig
 
     panel_url_path = f"{DOMAIN}_map"
     if async_panel_exists(hass, panel_url_path):
+        _PANEL_REGISTERED = True
         return
 
     panel_dir = os.path.join(os.path.dirname(__file__), "frontend")
@@ -46,14 +53,12 @@ async def _async_register_panel(hass: HomeAssistant) -> None:
         embed_iframe=False,
         require_admin=False,
     )
+    _PANEL_REGISTERED = True
 
 
-def _async_remove_panel(hass: HomeAssistant) -> None:
-    from homeassistant.components.frontend import async_panel_exists, async_remove_panel
-
-    panel_url_path = f"{DOMAIN}_map"
-    if async_panel_exists(hass, panel_url_path):
-        async_remove_panel(hass, panel_url_path)
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    await _async_register_panel(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: StptTransitConfigEntry) -> bool:
@@ -87,7 +92,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: StptTransitConfigEntry)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id, None)
         if not hass.data[DOMAIN]:
-            _async_remove_panel(hass)
             hass.data.pop(DOMAIN, None)
     return unload_ok
 

@@ -31,7 +31,9 @@ async def async_setup_entry(
 
     _cleanup_old_entities(hass, entry)
 
-    for station in get_stations(entry):
+    raw_stations = get_stations(entry)
+
+    for station in raw_stations:
         stop_id = station["stop_id"]
         station_info = coordinator.get_station_info(stop_id)
         name = station.get("name", "") or station_info.get("name", "") or f"Station {stop_id}"
