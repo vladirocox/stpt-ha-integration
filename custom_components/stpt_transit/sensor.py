@@ -65,13 +65,8 @@ async def async_setup_entry(
             )
             entities.append(StptArrivalsSensor(coordinator, stop_id, name, station_info))
 
-    ent_reg = er.async_get(hass)
-    for uid in GLOBAL_SENSOR_IDS:
-        if ent_reg.async_get_entity_id(Platform.SENSOR, DOMAIN, uid) is None:
-            if uid == "stpt_latest_alert":
-                entities.append(StptLatestAlertSensor(coordinator))
-            elif uid == "stpt_vehicles":
-                entities.append(StptVehiclesSensor(coordinator))
+    entities.append(StptLatestAlertSensor(coordinator))
+    entities.append(StptVehiclesSensor(coordinator))
 
     async_add_entities(entities, update_before_add=True)
 
@@ -92,6 +87,16 @@ def _cleanup_old_entities(hass: HomeAssistant, entry: StptTransitConfigEntry) ->
         if entity_entry.unique_id not in expected:
             _LOGGER.debug("Removing orphaned entity %s (unique_id: %s)", entity_entry.entity_id, entity_entry.unique_id)
             ent_reg.async_remove(entity_entry.entity_id)
+
+    for uid in GLOBAL_SENSOR_IDS | GLOBAL_BINARY_SENSOR_IDS:
+        for domain in ("sensor", "binary_sensor"):
+            existing_eid = ent_reg.async_get_entity_id(domain, DOMAIN, uid)
+            if existing_eid is None:
+                continue
+            existing_entry = ent_reg.async_get(existing_eid)
+            if existing_entry and existing_entry.config_entry_id != entry.entry_id:
+                _LOGGER.debug("Removing stale global entity %s (uid=%s)", existing_eid, uid)
+                ent_reg.async_remove(existing_eid)
 
 
 def _discover_lines(

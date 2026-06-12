@@ -8,14 +8,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from homeassistant.helpers import entity_registry as er
-
 from .const import DOMAIN, ATTRIBUTION
 from .coordinator import StptTransitConfigEntry, StptTransitCoordinator
 
 _LOGGER = logging.getLogger(__name__)
-
-DISRUPTIONS_UNIQUE_ID = "stpt_disruptions"
 
 
 async def async_setup_entry(
@@ -24,9 +20,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data
-    ent_reg = er.async_get(hass)
-    if ent_reg.async_get_entity_id("binary_sensor", DOMAIN, DISRUPTIONS_UNIQUE_ID) is None:
-        async_add_entities([StptAlertsBinarySensor(coordinator)], update_before_add=True)
+    async_add_entities([StptAlertsBinarySensor(coordinator)], update_before_add=True)
 
 
 class StptAlertsBinarySensor(CoordinatorEntity, BinarySensorEntity):
