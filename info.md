@@ -25,3 +25,10 @@ Add via HACS as custom repo, or copy `custom_components/stpt_transit/` to your H
 4. Use sensors in your dashboard with Map cards
 
 See `README.md` for full docs.
+
+## Related
+
+Prefer asking in plain language? [STPT MCP](https://github.com/vladirocox/stpt-mcp)
+serves the same live arrivals as an MCP server for AI assistants and chat
+clients. Also see the [Inky pHAT dashboard](https://github.com/vladirocox/inkystpt)
+for a Raspberry Pi e-ink departures display.

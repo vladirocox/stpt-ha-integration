@@ -1,6 +1,7 @@
 # STPT Transit — Integrare Home Assistant
 
 > **Română** — [Available in English](README.md)
+> Preferi să întrebi în loc să configurezi senzori? Vezi [STPT MCP](https://github.com/vladirocox/stpt-mcp) — aceleași sosiri live, servite ca server MCP pentru asistenți AI și clienți de chat.
 > Vizualizează și [Dashboard-ul pe cerneală electronică Inky pHAT](https://github.com/vladirocox/inkystpt) — un afișaj e-ink pentru plecări STPT, vreme și redări Chromecast.
 
 Monitorizează stațiile de autobuz/tramvai/troleibuz/vaporetto STPT (Societatea de Transport Public Timișoara) în timp real, cu suport complet pentru automatizări.
@@ -104,6 +105,24 @@ Câțiva senzori globali sunt disponibili:
 - `sensor.stpt_latest_alert` — titlul celei mai recente alerte STPT
 - `sensor.stpt_vehicles` — numărul total de vehicule active cu defalcarea `by_line`
 - `binary_sensor.stpt_disruptions` — pornit/oprit dacă există alerte active
+
+## Proiecte conexe
+
+Aceleași date STPT, expuse pentru medii de execuție diferite. Dacă unul dintre
+acestea se potrivește nevoilor tale, probabil și celelalte se potrivesc.
+
+| Proiect | Mediu | Folosește-l pentru |
+| --- | --- | --- |
+| [STPT MCP](https://github.com/vladirocox/stpt-mcp) | Orice client MCP | Să vorbești cu datele de transport |
+| **STPT Transit** (acest repo) | Home Assistant | Automatizări, senzori și dashboard-uri |
+| [Inky pHAT](https://github.com/vladirocox/inkystpt) | Raspberry Pi | Un afișaj e-ink de plecări, dintr-o privire |
+
+Preferi să întrebi în loc să construiești o automatizare? Serverul MCP răspunde
+în limbaj natural, din același endpoint live și din același program de rezervă:
+
+![Un asistent care răspunde la "when does the 14 get to Piata Marasti?" cu uneltele MCP STPT](assets/chat-arrivals.png)
+
+Toate cele trei sunt neoficiale și nu sunt afiliate STPT.
 
 ## Surse de date
 

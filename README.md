@@ -1,6 +1,7 @@
 # STPT Transit — Home Assistant Integration
 
 > **English** — [Disponibil în limba română](README.ro.md)
+> Prefer asking instead of wiring sensors? See [STPT MCP](https://github.com/vladirocox/stpt-mcp) — the same live arrivals, served as an MCP server for AI assistants and chat clients.
 > Also check out the [Inky pHAT Dashboard](https://github.com/vladirocox/inkystpt) — an e-ink display for STPT departures, weather, and Chromecast now-playing.
 
 Monitor STPT (Societatea de Transport Public Timișoara) bus/tram/trolley/vaporetto stations in real time with full automation support.
@@ -104,6 +105,24 @@ A few global sensors are also available:
 - `sensor.stpt_latest_alert` — title of the most recent STPT alert
 - `sensor.stpt_vehicles` — total active vehicles with `by_line` breakdown
 - `binary_sensor.stpt_disruptions` — on/off if any alerts are active
+
+## Related projects
+
+The same STPT data, exposed for different runtimes. If one of these fits your
+setup, the others probably do too.
+
+| Project | Runtime | Use it for |
+| --- | --- | --- |
+| [STPT MCP](https://github.com/vladirocox/stpt-mcp) | Any MCP client | Talking to your transport data |
+| **STPT Transit** (this repo) | Home Assistant | Automations, sensors, and dashboards |
+| [Inky pHAT](https://github.com/vladirocox/inkystpt) | Raspberry Pi | A glanceable e-ink departures display |
+
+Ask a question instead of building an automation? The MCP server answers in
+plain language, from the same live endpoint and the same schedule fallback:
+
+![An assistant answering "when does the 14 get to Piata Marasti?" with the stpt MCP tools](assets/chat-arrivals.png)
+
+All three are unofficial and are not affiliated with STPT.
 
 ## Data Sources
 
